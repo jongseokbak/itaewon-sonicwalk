@@ -1,6 +1,6 @@
 /* 이태원 소닉워크 — offline service worker */
-const SHELL="sonicwalk-shell-v2", AUDIO="sonicwalk-audio-v1", TILES="sonicwalk-tiles-v1", FONTS="sonicwalk-fonts-v1";
-const SHELL_FILES=["./","index.html","vendor/leaflet.min.js","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/apple-touch-icon.png"];
+const SHELL="sonicwalk-shell-v3", AUDIO="sonicwalk-audio-v1", TILES="sonicwalk-tiles-v1", FONTS="sonicwalk-fonts-v1";
+const SHELL_FILES=["./","index.html","guide.html","vendor/leaflet.min.js","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/apple-touch-icon.png"];
 const TILE_MAX=400;
 
 self.addEventListener("install",e=>{

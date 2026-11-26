@@ -6,7 +6,8 @@
 
 | 파일 | 내용 |
 |---|---|
-| `index.html` | 앱 본체 (경로·지점·사진 포함) |
+| `index.html` | 앱 본체 |
+| `guide.html` | 참가 안내 웹 문서 (워드 안내서와 같은 내용) |
 | `sw.js` | 오프라인 저장을 맡는 서비스 워커 |
 | `manifest.webmanifest`, `icons/` | 홈 화면 아이콘과 앱 이름 |
 | `vendor/leaflet.min.js` | 지도 도구 (Leaflet 1.9.4) |
