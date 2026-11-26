@@ -364,7 +364,7 @@ const VERSIONS=[
   {id:"v1",chip:"1 낮",name:"1 · 낮의 소리",desc:"11월 26일(목) 13시 점심 녹음",audio:"audio/v1_lunch.m4a",data:"lunch",mb:68.0},
   {id:"v2",chip:"2 밤",name:"2 · 밤의 소리",desc:"11월 26일(목) 19시 30분 저녁 녹음",audio:"audio/v2_evening.m4a",data:"evening",mb:50.1},
   {id:"v3",chip:"3 겹침",name:"3 · 겹친 시간",desc:"같은 자리의 낮과 밤이 겹친 채, 한쪽이 밀물처럼 떠올랐다 가라앉습니다",audio:"audio/v3_ghost_overlap.m4a",data:"evening",mb:50.1},
-  {id:"v4",chip:"4 뒤섞임",name:"4 · 뒤섞인 장소",desc:"겹친 시간 위로, 400m 넘게 떨어진 다른 장소의 소리가 스며들었다 사라집니다",audio:"audio/v4_ghost_shuffle.m4a",data:"evening",mb:50.1}];
+  {id:"v4",chip:"4 뒤섞임",name:"4 · 뒤섞인 장소",desc:"같은 자리의 낮과 밤이 겹쳐 흐르는 가운데, 400m 넘게 떨어진 다른 장소의 소리가 스며들었다 사라집니다",audio:"audio/v4_ghost_shuffle.m4a",data:"evening",mb:50.1}];
 const vById=id=>VERSIONS.find(v=>v.id===id)||VERSIONS[1];
 const STOPS=DATA.stops.map(s=>Object.assign({},s));
 const BETWEEN={
