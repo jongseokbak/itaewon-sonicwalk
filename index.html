@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#121416">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="소닉워크">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>이태원 소닉워크</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" crossorigin="anonymous">
+<style>
+*,*::before,*::after{box-sizing:border-box}body{margin:0}
+/* Layout: one-screen field tool — status chips, map, now-playing card with photos, stops grouped by course, pre-walk logger, settings. */
+:root{
+  --bg:#F2F3F1; --surface:#FFFFFF; --fg:#1C1F22; --muted:#5F666C; --line:#D5D8D6;
+  --accent:#2F5BD8; --accent-fg:#FFFFFF; --live:#0E7C6B; --live-soft:rgba(14,124,107,.14);
+  --warn:#B45309; --rec:#C0262D; --map-bg:#E6E8E5;
+  --route1:#2F5BD8; --route2:#A8459A; --track:#5F666C; --zone:#0E7C6B; --me:#C2410C;
+  --tile-filter:none;
+  --font-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121416; --surface:#1B1E21; --fg:#E7E9EA; --muted:#9AA1A7; --line:#2C3135;
+  --accent:#7C9CFF; --accent-fg:#0C1022; --live:#3CC4A8; --live-soft:rgba(60,196,168,.16);
+  --warn:#F59E0B; --rec:#F87171; --map-bg:#1A1D20;
+  --route1:#7C9CFF; --route2:#E08AD2; --track:#9AA1A7; --zone:#3CC4A8; --me:#FB923C;
+  --tile-filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9);
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#121416; --surface:#1B1E21; --fg:#E7E9EA; --muted:#9AA1A7; --line:#2C3135;
+  --accent:#7C9CFF; --accent-fg:#0C1022; --live:#3CC4A8; --live-soft:rgba(60,196,168,.16);
+  --warn:#F59E0B; --rec:#F87171; --map-bg:#1A1D20;
+  --route1:#7C9CFF; --route2:#E08AD2; --track:#9AA1A7; --zone:#3CC4A8; --me:#FB923C;
+  --tile-filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9);
+  color-scheme:dark;}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.app{max-width:760px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:12px 32px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:14px;font-weight:600;margin:4px 2px 0;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .swatch{display:inline-block;width:18px;height:4px;border-radius:2px}
+h2 .meta{font-weight:400;font-variant-numeric:tabular-nums}
+.sub{color:var(--muted);font-size:13px;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface);font-variant-numeric:tabular-nums}
+.chip.ok{border-color:var(--live);color:var(--live)}
+.chip.warn{border-color:var(--warn);color:var(--warn)}
+.chip.rec{border-color:var(--rec);color:var(--rec)}
+#map{height:min(48vh,440px);min-height:280px;border-radius:10px;border:1px solid var(--line);background:var(--map-bg)}
+.mapnote{font-size:12px;color:var(--muted);margin:-4px 2px 0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin:-6px 2px 0}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.now{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.now.live{border-color:var(--live);box-shadow:0 0 0 3px var(--live-soft)}
+.nowtop{display:flex;gap:12px;align-items:flex-start}
+.badge{flex:none;min-width:40px;height:40px;padding:0 8px;border-radius:20px;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;background:var(--line);color:var(--fg)}
+.now.live .badge{background:var(--live);color:var(--surface)}
+.nowtext{min-width:0}
+.kicker{font-size:12px;color:var(--muted);margin:0 0 1px;letter-spacing:.02em}
+.nowname{font-weight:600;font-size:17px;margin:0;text-wrap:balance}
+.nowsub{color:var(--muted);font-size:13px;margin:0}
+.state{font-size:14px;margin:0;font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--live);transition:width .3s linear}
+.photos{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.photos button{flex:none;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);width:128px}
+.photos img{display:block;width:128px;height:96px;object-fit:cover}
+.photos span{display:block;font-size:11px;line-height:1.35;color:var(--muted);padding:4px 6px;text-align:left}
+video{width:100%;border-radius:8px;background:#000}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{font:inherit;font-size:14px;border-radius:8px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+select{padding:8px 10px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+button.recbtn{border-color:var(--rec);color:var(--rec);font-weight:600}
+button:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+.stoplist{display:flex;flex-direction:column;gap:6px}
+ol.stops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+ol.stops li{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.srow{display:flex;align-items:center;gap:10px;cursor:pointer}
+ol.stops li.walkseg{border:0;background:transparent;padding:0 0 0 14px;gap:6px}
+ol.stops li.walkseg .vchips{padding-left:30px}
+ol.stops li.current{border-color:var(--live)}
+ol.stops li.done .num{background:var(--live-soft);color:var(--live)}
+ol.stops li.current .num{background:var(--live);color:var(--surface)}
+ol.stops li.depart{cursor:default;background:transparent;border-style:dashed}
+.num{flex:none;min-width:32px;height:32px;padding:0 6px;border-radius:16px;display:grid;place-items:center;font-family:var(--font-mono);font-size:13px;background:var(--line)}
+.stxt{min-width:0;flex:1}
+.stxt b{font-weight:600;display:block}
+.stxt span{color:var(--muted);font-size:13px}
+.dist{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{white-space:nowrap;display:inline-block;font-weight:400;font-size:11px;color:var(--warn);border:1px solid var(--warn);border-radius:4px;padding:0 4px;margin-left:4px;vertical-align:1px}
+.between{font-size:12px;color:var(--muted);margin:0;padding-left:28px;border-left:2px dotted var(--line)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+summary{cursor:pointer;font-weight:600}
+.set{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+label{font-size:14px}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.big{font-family:var(--font-mono);font-size:32px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+input[type=text],input[type=number]{font:inherit;font-family:var(--font-mono);font-size:13px;width:6.5em;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+input[type=range]{accent-color:var(--accent)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--muted);font-weight:500}
+textarea{width:100%;box-sizing:border-box;min-height:90px;font-family:var(--font-mono);font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);padding:8px}
+.foot{font-size:12px;color:var(--muted)}
+.copy{font-size:11px;color:var(--muted);text-align:right;margin:-4px 0 0;opacity:.7}
+.tabs{display:flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.tabs button{flex:1;border:0;background:transparent;padding:10px 8px;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
+.pane{display:flex;flex-direction:column;gap:12px}
+.pane[hidden]{display:none}
+.vchips{display:flex;flex-wrap:wrap;gap:6px}
+.vchips button{padding:5px 11px;font-size:13px;border-radius:999px;color:var(--muted)}
+.vchips button.on{background:var(--live-soft);border-color:var(--live);color:var(--live);font-weight:600}
+#segList{display:flex;flex-direction:column;gap:8px}
+.segmap{position:sticky;top:0;z-index:5;height:210px;border-radius:10px;border:1px solid var(--line);background:var(--map-bg);box-shadow:0 6px 12px -8px rgba(0,0,0,.35)}
+.segrow{cursor:pointer}
+.segrow.sel{border-color:var(--accent)}
+.locbtn{width:34px;height:34px;display:grid;place-items:center;padding:0;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.locbtn svg{width:18px;height:18px}
+.locbtn.busy{color:var(--accent)}
+.locbtn.busy svg{animation:locpulse 1s ease-in-out infinite}
+@keyframes locpulse{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.locbtn.busy svg{animation:none}}
+.segrow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.segrow.walk{background:transparent;border-style:dashed}
+.segrow.on{border-color:var(--live);box-shadow:0 0 0 3px var(--live-soft)}
+.sh{display:flex;align-items:center;gap:10px}
+.sh b{font-weight:600;line-height:1.35}
+.ssub{font-size:13px;color:var(--muted);margin:0}
+.sctl{display:flex;align-items:center;gap:10px}
+.sctl .bar{flex:1}
+.sctl button{min-width:4.5em}
+.stime{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+#offline[hidden]{display:none}
+.offrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.offrow:last-child{border-bottom:0}
+.offrow .on{flex:1;min-width:9em}
+.offrow .on b{display:block;font-weight:600;font-size:14px}
+.offrow .on span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.offrow .pbar{flex-basis:100%;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.offrow .pbar[hidden]{display:none}
+.offrow .pbar>i{display:block;height:100%;width:0;background:var(--live)}
+.offrow button{padding:7px 12px}
+.offrow .saved{color:var(--live);font-size:13px;font-weight:600}
+.notice{font-size:13px;margin:0;padding:8px 10px;border-radius:8px;border:1px solid var(--warn);color:var(--warn)}
+.notice[hidden]{display:none}
+input.pw{width:9em;font-size:15px}
+#pwMsg.ok{color:var(--live)}
+#pwMsg.bad{color:var(--warn)}
+.pocket{position:fixed;inset:0;background:#000;color:#6b7075;z-index:6000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;touch-action:none;user-select:none;-webkit-user-select:none}
+.pocket[hidden]{display:none}
+.pocket .pk-now{font-size:16px;color:#8a9096;max-width:22em}
+.pocket .pk-hint{font-size:13px}
+.pocket .pk-ring{width:64px;height:64px;border-radius:50%;border:2px solid #2a2e32;display:grid;place-items:center;font-family:var(--font-mono);font-size:12px}
+.pocket.holding .pk-ring{border-color:#3CC4A8;color:#3CC4A8}
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;z-index:5000}
+.viewer[hidden]{display:none}
+.viewer img{max-width:100%;max-height:78vh;border-radius:8px}
+.viewer p{color:#fff;margin:0;font-size:14px;text-align:center}
+/* Leaflet core (inlined: the CDN allows scripts only) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;-webkit-tap-highlight-color:transparent;font-family:var(--font-body);outline-offset:1px}
+.leaflet-container img.leaflet-tile,.leaflet-container .leaflet-marker-pane img{max-width:none!important;max-height:none!important}
+.leaflet-tile,.leaflet-marker-icon{user-select:none;-webkit-user-drag:none}
+.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-tile-pane{filter:var(--tile-filter)}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}
+.leaflet-map-pane svg{z-index:200}
+.leaflet-touch-zoom{touch-action:pan-x pan-y}.leaflet-touch-drag{touch-action:pinch-zoom}.leaflet-touch-drag.leaflet-touch-zoom{touch-action:none}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}.leaflet-crosshair{cursor:crosshair}
+.leaflet-interactive{cursor:pointer}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-right .leaflet-control{float:right}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:0}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:0}
+.leaflet-bar{border-radius:6px;border:1px solid var(--line);overflow:hidden}
+.leaflet-bar a{display:block;width:32px;height:32px;line-height:32px;text-align:center;text-decoration:none;background:var(--surface);color:var(--fg);font:600 18px/32px var(--font-mono)}
+.leaflet-bar a+a{border-top:1px solid var(--line)}
+.leaflet-control-attribution{background:var(--surface);color:var(--muted);font-size:10px;padding:0 5px;opacity:.85}
+.leaflet-control-attribution a{color:var(--muted)}
+.leaflet-tooltip{position:absolute;padding:2px 6px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;font-size:11px;font-family:var(--font-mono)}
+.leaflet-tooltip-top{margin-top:-8px}
+@media (prefers-reduced-motion: reduce){.bar>i{transition:none}.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>이태원 소닉워크</h1>
+      <p class="sub">11월 28일(토) 15–17시 · 코스 2 부군당→10.29 골목, 이어서 코스 1 후커힐→서울중앙성원→보광동 재개발 현장</p>
+    </div>
+    <div class="chips" aria-live="polite">
+      <span class="chip" id="chipLoc">위치 대기</span>
+      <span class="chip" id="chipSrc">녹음 준비</span>
+      <span class="chip" id="chipWake" hidden>화면 켜짐 유지</span>
+    </div>
+  </header>
+
+  <details id="offline" hidden>
+    <summary>오프라인 저장 · 현장에서 데이터 없이 듣기</summary>
+    <div class="set">
+      <p class="notice" id="offIos" hidden>아이폰에서는 먼저 Safari 아래쪽 공유 버튼 → '홈 화면에 추가'를 누른 뒤, 홈 화면에 생긴 '소닉워크' 아이콘으로 열어서 저장하세요. Safari에서 저장한 소리는 홈 화면 앱에서 보이지 않습니다.</p>
+      <p class="hint">녹음은 수업 비밀번호로 잠겨 있어, 이 휴대폰에 저장해야 들을 수 있습니다. 와이파이에서 미리 저장해 두면 현장에서는 인터넷 없이 홈 화면 아이콘으로 열어 씁니다. 구간에 고른 버전은 모두 저장하세요.</p>
+      <div class="row">
+        <label for="pw">수업 비밀번호</label>
+        <input type="text" id="pw" class="pw" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done">
+        <button id="pwOk">확인</button>
+      </div>
+      <p class="hint" id="pwMsg">진행자에게 받은 비밀번호를 넣으세요.</p>
+      <div id="offList"></div>
+      <p class="hint" id="offMsg"></p>
+    </div>
+  </details>
+
+  <div class="tabs" role="tablist" aria-label="듣는 방식">
+    <button role="tab" id="tabSeg" aria-selected="true" aria-controls="paneSeg">구간 골라 듣기</button>
+    <button role="tab" id="tabWalk" aria-selected="false" aria-controls="paneWalk">걸으며 듣기</button>
+  </div>
+
+  <section id="paneSeg" role="tabpanel" aria-labelledby="tabSeg" class="pane">
+    <div id="segMap" class="segmap" role="application" aria-label="구간 위치 지도"></div>
+    <p class="mapnote" id="segMapNote">지도 왼쪽 위 버튼을 누르면 내 위치를 표시합니다.</p>
+    <p class="hint">위치와 상관없이 구간을 골라 듣습니다. 구간 칸을 누르면 위 지도에 그 구간이 표시됩니다. 걷기 전 미리 듣거나, 걷고 나서 같은 자리의 낮과 밤을 견주어 들을 때 쓰세요. 듣는 도중 버전을 바꾸면 그 구간의 같은 지점에서 이어집니다. 여기서 고른 버전은 '걸으며 듣기'에도 그대로 쓰입니다.</p>
+    <div class="row">
+      <input type="checkbox" id="autoNext" checked>
+      <label for="autoNext">한 구간이 끝나면 다음 구간으로 이어 듣기</label>
+    </div>
+    <div id="segList"></div>
+  </section>
+
+  <section id="paneWalk" role="tabpanel" aria-labelledby="tabWalk" class="pane" hidden>
+    <div id="map" role="application" aria-label="걷기 경로 지도"></div>
+    <div class="legend" aria-hidden="true"><span><i style="background:var(--route1)"></i>코스 2 (먼저)</span><span><i style="background:var(--route2)"></i>코스 1</span></div>
+    <p class="mapnote" id="mapNote">경로와 지점은 11월 26일 저녁 사전답사 때 실제로 걸은 GPS 기록입니다.</p>
+
+    <section class="now" id="now" aria-live="polite">
+      <div class="nowtop">
+        <div class="badge" id="nowBadge">1</div>
+        <div class="nowtext">
+          <p class="kicker" id="nowKicker">출발 지점</p>
+          <p class="nowname" id="nowName">부군당에서 걷기 시작을 누르세요</p>
+          <p class="nowsub" id="nowSub">지금 서 있는 자리의 녹음이 나옵니다. 구간마다 소리 버전을 아래 목록에서 따로 고를 수 있습니다.</p>
+        </div>
+      </div>
+      <p class="state" id="nowState">휴대폰 화면을 켠 채로 걸으세요. 화면이 꺼지면 소리도 멈추고, 다시 켜면 그 자리의 소리부터 이어집니다. 주변 소리가 함께 들리는 이어폰(투명 모드나 한쪽 귀)으로 들으세요.</p>
+      <div class="bar" aria-hidden="true"><i id="nowBar"></i></div>
+      <p class="hint" id="nowVer"></p>
+      <div class="photos" id="nowPhotos"></div>
+      <div class="btns">
+        <button class="primary" id="btnStart">걷기 시작</button>
+        <button id="btnPause" disabled>소리 멈춤</button>
+        <button id="btnAuto" hidden>위치 따라가기로 돌아가기</button>
+        <button id="btnPocket">주머니 모드</button>
+      </div>
+      <div class="row">
+        <label for="verAll">모든 구간 한꺼번에</label>
+        <select id="verAll"></select>
+      </div>
+    </section>
+
+    <div class="stoplist" id="stopList" aria-label="걷기 지점과 구간별 소리 버전"></div>
+  </section>
+
+  <details id="settings">
+    <summary>설정</summary>
+    <div class="set">
+      <div class="row">
+        <label for="mode">걸을 때 재생</label>
+        <select id="mode"><option value="route">경로 따라 이어 듣기</option><option value="zones">해설 지점에서만</option></select>
+      </div>
+      <div class="row">
+        <label for="radius">지점 반경</label>
+        <input type="range" id="radius" min="15" max="60" step="5" value="25">
+        <span class="dist" id="radiusVal">25 m</span>
+      </div>
+      <div class="row">
+        <input type="checkbox" id="ordered" checked>
+        <label for="ordered">순서대로만 반응 (지금 지점이나 다음 지점만)</label>
+      </div>
+      <div class="row">
+        <input type="checkbox" id="simMode">
+        <label for="simMode">실내 시험: 지도를 눌러 내 위치 옮기기</label>
+      </div>
+      <div class="btns">
+        <button id="btnSim">모의 걷기</button>
+        <label for="simSpeed" class="hint">속도</label>
+        <select id="simSpeed"><option value="1">실제 속도</option><option value="5">5배</option><option value="20" selected>20배</option></select>
+      </div>
+      <div class="btns"><button id="btnReset">구간별 버전 처음 값으로</button></div>
+      <p class="hint" id="cfgMsg"></p>
+    </div>
+  </details>
+
+  <p class="foot">한자리에 머물면 그 자리의 소리를 겹쳐 이으며 반복합니다. 화면이 꺼지거나, 걷는 도중 위치 신호가 20초 넘게 끊기거나, 경로에서 40m 넘게 벗어나면 소리를 멈추고, 새 위치가 잡히면 그 자리의 소리부터 이어집니다. 위치 정보는 이 기기 안에서만 쓰입니다.</p>
+  <p class="copy">© 2026 Jongseok Bak · All rights reserved</p>
+</div>
+
+<div class="pocket" id="pocket" hidden role="dialog" aria-modal="true" aria-label="주머니 모드">
+  <p class="pk-now" id="pkNow"></p>
+  <div class="pk-ring" id="pkRing">길게</div>
+  <p class="pk-hint">화면은 켜진 채 검게 유지되고 소리는 계속 납니다. 해제하려면 아무 곳이나 1.5초 길게 누르세요.</p>
+</div>
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="사진 크게 보기">
+  <img id="viewerImg" alt="">
+  <p id="viewerCap"></p>
+  <button id="viewerClose">닫기</button>
+</div>
+
+<script src="vendor/leaflet.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const PHOTOS={}; /* 지점별 사진: {p1:[{src:"photos/p1-1.jpg",cap:"설명"}], ...} 형식으로 넣으면 지금 재생 칸에 다시 보입니다 */
+const PACE=0.8;             /* m/s, 20명이 함께 걷는 속도 */
+const OFFROUTE=40;          /* m */
+const GPS_GAP=20000;        /* ms */
+const XF=2.5;               /* s, crossfade at every jump and loop */
+const LINGER=30;            /* s, half-window looped when standing still between stops */
+const HOSTED=!!document.querySelector('link[rel="manifest"]');
+const DATA={"route":[[37.536067,126.989759],[37.536118,126.989858],[37.536174,126.989745],[37.53609,126.98969],[37.535994,126.989665],[37.536085,126.989716],[37.536157,126.989797],[37.536178,126.989913],[37.536251,126.990008],[37.536316,126.990105],[37.536163,126.990162],[37.536064,126.990199],[37.535959,126.990228],[37.535912,126.990327],[37.535835,126.990428],[37.535767,126.990513],[37.535716,126.990623],[37.535607,126.990707],[37.535518,126.990767],[37.535413,126.990776],[37.535341,126.990844],[37.535289,126.990995],[37.535174,126.991026],[37.535155,126.991145],[37.535056,126.991166],[37.535104,126.991277],[37.535194,126.991341],[37.535248,126.99144],[37.535255,126.991593],[37.535274,126.991733],[37.535287,126.99185],[37.535198,126.991913],[37.535114,126.991981],[37.535003,126.992028],[37.534932,126.992121],[37.534862,126.992251],[37.534809,126.992347],[37.534759,126.992444],[37.534746,126.992571],[37.534713,126.992694],[37.534723,126.992817],[37.534738,126.992929],[37.534753,126.993048],[37.534752,126.993173],[37.534782,126.993283],[37.534781,126.993397],[37.534695,126.993439],[37.534767,126.993515],[37.534867,126.993578],[37.534775,126.993519],[37.534756,126.993646],[37.534647,126.993642],[37.534593,126.993749],[37.534484,126.993913],[37.534373,126.994039],[37.534373,126.994167],[37.534402,126.994289],[37.53443,126.994414],[37.534459,126.994297],[37.534469,126.994416],[37.534571,126.994469],[37.534586,126.994598],[37.534602,126.994723],[37.534647,126.994837],[37.534657,126.994951],[37.53466,126.995083],[37.534669,126.995208],[37.534643,126.995345],[37.534636,126.99546],[37.534593,126.995576],[37.534471,126.995699],[37.534399,126.995851],[37.534309,126.995863],[37.534214,126.995849],[37.534174,126.995963],[37.534154,126.996084],[37.534151,126.996203],[37.534128,126.996329],[37.5341,126.996449],[37.534105,126.996589],[37.53411,126.996705],[37.534015,126.996757],[37.533897,126.996759],[37.533802,126.996751],[37.533673,126.996731],[37.533652,126.996917],[37.53365,126.997041],[37.533648,126.997168],[37.533599,126.997269],[37.533691,126.997306],[37.533788,126.997366],[37.533768,126.997229],[37.53372,126.997123],[37.533721,126.997001],[37.533712,126.996864],[37.533695,126.996745],[37.533669,126.99661],[37.533645,126.996498],[37.533609,126.996357],[37.533578,126.996235],[37.533622,126.996118],[37.533557,126.996029],[37.533458,126.996004],[37.533362,126.995982],[37.533265,126.996041],[37.533314,126.996142],[37.533338,126.996258],[37.533349,126.996392],[37.53334,126.996508],[37.533325,126.99667],[37.533311,126.996783],[37.533292,126.996923],[37.533254,126.997052],[37.533231,126.997194],[37.533215,126.99731],[37.533222,126.997442],[37.533211,126.997568],[37.533186,126.997691],[37.533054,126.997697],[37.533018,126.997803],[37.532923,126.997854],[37.532833,126.997933],[37.53276,126.998023],[37.532727,126.998136],[37.532736,126.998171]],"split":46,"stops":[{"id":"p1","n":"1","course":2,"name":"이태원 부군당 역사공원","sub":"부군당과 굿터 · 유관순 열사 추모비 (출발)","lat":37.536129,"lon":126.989726,"approx":false},{"id":"p2","n":"2","course":2,"name":"10.29 기억과 안전의 길","sub":"유흥도시의 골목과 공적 애도","lat":37.534763,"lon":126.993422,"approx":false},{"id":"p3","n":"3","course":1,"name":"후커힐 · 트랜스젠더 업소 거리","sub":"미군 기지촌에서 한일 관광 성산업으로","lat":37.533595,"lon":126.996155,"approx":false},{"id":"p4","n":"4","course":1,"name":"서울중앙성원","sub":"냉전 동맹, 중동 건설 붐, 이주민 공동체","lat":37.533155,"lon":126.997706,"approx":false},{"id":"p5","n":"5","course":1,"name":"보광동 재개발 현장","sub":"한남3구역 일대","lat":37.532741,"lon":126.99811,"approx":false}],"evening":{"times":{"p1":[0.0,496.8],"p2":[1305.6,1727.0],"p3":[2421.7,2500.7],"p4":[2732.9,2828.0],"p5":[2855.2,3081.4]},"track":[[37.536067,126.989759,58.3],[37.536067,126.989745,63.3],[37.536095,126.989807,65.3],[37.536105,126.989839,68.3],[37.536118,126.989858,73.3],[37.536128,126.989855,78.3],[37.536122,126.989838,83.3],[37.536125,126.989828,88.3],[37.536133,126.989794,93.4],[37.536155,126.989757,97.4],[37.536174,126.989745,103.4],[37.536195,126.989793,109.4],[37.536205,126.989829,114.4],[37.536211,126.989833,120.4],[37.536205,126.989767,123.4],[37.536203,126.989773,129.4],[37.536198,126.989802,134.4],[37.536209,126.989816,139.4],[37.536217,126.98982,144.4],[37.536217,126.98982,149.4],[37.536222,126.989806,154.4],[37.536223,126.989785,159.4],[37.536221,126.989788,164.4],[37.536231,126.989789,169.4],[37.536226,126.989787,174.4],[37.536211,126.989767,179.4],[37.536187,126.989748,184.4],[37.536165,126.98973,189.5],[37.536163,126.989707,195.5],[37.536166,126.989698,201.5],[37.536176,126.989682,207.5],[37.536166,126.989692,213.5],[37.536181,126.989718,219.5],[37.536165,126.989734,225.5],[37.536165,126.989734,230.5],[37.536165,126.989734,235.5],[37.536165,126.989734,240.5],[37.536165,126.989734,245.5],[37.536165,126.989734,250.5],[37.536165,126.989734,255.5],[37.536165,126.989734,260.5],[37.536165,126.989734,265.5],[37.536165,126.989734,270.5],[37.536142,126.989716,275.5],[37.536126,126.98971,280.6],[37.536103,126.9897,286.6],[37.536103,126.9897,292.6],[37.536101,126.9897,298.6],[37.536094,126.989706,304.6],[37.53609,126.98969,310.6],[37.536092,126.989676,316.6],[37.536099,126.989686,322.6],[37.536106,126.989686,328.6],[37.536122,126.989688,333.6],[37.536153,126.98969,338.6],[37.536174,126.989693,343.6],[37.536172,126.989696,348.6],[37.536172,126.989696,353.6],[37.536172,126.989696,358.6],[37.536172,126.989696,363.6],[37.536172,126.989696,368.6],[37.536172,126.989696,373.6],[37.536167,126.989689,378.6],[37.536163,126.989684,383.6],[37.536133,126.98968,386.6],[37.536109,126.989668,391.7],[37.536109,126.989668,397.7],[37.536105,126.989668,403.7],[37.536099,126.989668,409.7],[37.536076,126.989666,415.7],[37.536054,126.989664,421.7],[37.536039,126.989668,427.7],[37.536024,126.989667,432.7],[37.535994,126.989665,437.7],[37.535995,126.989666,442.7],[37.53599,126.989666,447.7],[37.535968,126.989674,452.7],[37.535965,126.989687,457.7],[37.535965,126.989687,462.7],[37.535965,126.989687,467.7],[37.535975,126.989687,472.7],[37.536007,126.989684,477.7],[37.536037,126.989692,481.8],[37.536058,126.989696,487.8],[37.536085,126.989716,491.8],[37.536113,126.989739,497.8],[37.53614,126.989768,500.8],[37.536157,126.989797,503.8],[37.536164,126.98983,506.8],[37.536171,126.989876,510.8],[37.536178,126.989913,512.8],[37.536188,126.989936,518.8],[37.536209,126.98996,524.8],[37.536235,126.989989,528.8],[37.536251,126.990008,533.8],[37.536252,126.990011,538.8],[37.536255,126.990023,543.8],[37.536271,126.990053,547.8],[37.536297,126.990082,549.8],[37.536316,126.990105,554.8],[37.536316,126.990105,559.8],[37.536284,126.990118,563.8],[37.536256,126.99012,566.8],[37.536253,126.99012,571.8],[37.53623,126.990136,576.8],[37.536163,126.990162,579.9],[37.536124,126.990174,580.9],[37.536091,126.990187,581.9],[37.536064,126.990199,583.9],[37.536038,126.990212,586.9],[37.536006,126.990227,589.9],[37.535981,126.99023,595.9],[37.535959,126.990228,601.9],[37.535953,126.990228,607.9],[37.535915,126.99023,611.9],[37.535897,126.990232,617.9],[37.535897,126.990232,623.9],[37.535913,126.990247,629.9],[37.535933,126.990251,634.9],[37.535908,126.990253,639.9],[37.535929,126.990253,644.9],[37.535927,126.990254,649.9],[37.535925,126.990256,654.9],[37.535932,126.990265,659.9],[37.535941,126.990281,664.9],[37.535937,126.990291,669.9],[37.535912,126.990327,674.9],[37.535884,126.990363,676.9],[37.535855,126.990403,678.9],[37.535835,126.990428,681.0],[37.535809,126.990463,683.0],[37.535767,126.990513,684.0],[37.535758,126.990524,690.0],[37.535744,126.990551,696.0],[37.535729,126.99059,700.0],[37.535716,126.990623,702.0],[37.535695,126.990661,705.0],[37.535671,126.99068,708.0],[37.535662,126.990682,714.0],[37.535643,126.990689,720.0],[37.535607,126.990707,725.0],[37.535569,126.990733,728.0],[37.53553,126.990761,730.0],[37.535518,126.990767,735.0],[37.535494,126.990768,740.0],[37.535446,126.990774,742.0],[37.535413,126.990776,744.0],[37.53537,126.990774,748.0],[37.53535,126.990772,753.0],[37.535356,126.990807,758.0],[37.535341,126.990844,760.0],[37.535312,126.990891,762.0],[37.535295,126.990932,764.0],[37.535289,126.990995,767.0],[37.53529,126.991003,772.0],[37.53529,126.991003,777.0],[37.535263,126.991012,781.0],[37.535232,126.991015,785.0],[37.535208,126.991014,790.1],[37.535174,126.991026,794.1],[37.535158,126.991029,800.1],[37.535139,126.991022,806.1],[37.535111,126.991007,810.1],[37.535132,126.991022,816.1],[37.53513,126.991021,822.1],[37.535157,126.991042,828.1],[37.535167,126.991049,833.1],[37.535165,126.991049,838.1],[37.535161,126.991047,843.1],[37.535171,126.991077,848.1],[37.535165,126.991112,851.1],[37.535155,126.991145,853.1],[37.535135,126.991189,855.1],[37.535124,126.991211,860.1],[37.535124,126.991211,865.1],[37.535108,126.9912,870.1],[37.535084,126.991184,875.1],[37.535082,126.991183,880.1],[37.535082,126.991184,885.1],[37.535056,126.991166,889.1],[37.535083,126.991185,894.2],[37.535073,126.991238,898.2],[37.535068,126.99125,904.2],[37.535104,126.991277,910.2],[37.535148,126.991309,913.2],[37.535169,126.991316,919.2],[37.535194,126.991341,925.2],[37.535222,126.99136,927.2],[37.535233,126.9914,930.2],[37.535248,126.99144,932.2],[37.53526,126.991465,937.2],[37.535267,126.991459,942.2],[37.535264,126.991497,945.2],[37.535271,126.991544,948.2],[37.535255,126.991593,950.2],[37.535251,126.991622,955.2],[37.535259,126.991659,960.2],[37.535266,126.991694,963.2],[37.535274,126.991733,965.2],[37.53528,126.991777,968.2],[37.535282,126.991802,973.2],[37.535283,126.991806,978.2],[37.535287,126.99185,980.2],[37.535285,126.991855,985.2],[37.535254,126.991852,990.3],[37.535235,126.991856,996.3],[37.535215,126.991879,999.3],[37.535198,126.991913,1003.3],[37.535187,126.991941,1009.3],[37.535172,126.991957,1015.3],[37.535146,126.99197,1020.3],[37.535114,126.991981,1026.3],[37.535102,126.991985,1031.3],[37.535112,126.991987,1036.3],[37.535101,126.991991,1041.3],[37.535074,126.991999,1044.3],[37.535037,126.992012,1048.3],[37.535003,126.992028,1051.3],[37.535,126.99203,1056.3],[37.535,126.99203,1061.3],[37.534984,126.992052,1066.3],[37.535036,126.992036,1070.3],[37.535008,126.992046,1075.3],[37.535018,126.992055,1080.3],[37.535037,126.992056,1085.3],[37.535018,126.992063,1090.4],[37.534989,126.992077,1094.4],[37.534986,126.99208,1100.4],[37.534986,126.99208,1106.4],[37.534956,126.992101,1112.4],[37.534932,126.992121,1115.4],[37.534922,126.992142,1121.4],[37.534904,126.992175,1127.4],[37.534883,126.992212,1130.4],[37.534862,126.992251,1133.4],[37.534857,126.99226,1138.4],[37.534844,126.992284,1143.4],[37.534827,126.992315,1147.4],[37.534815,126.992337,1152.4],[37.534809,126.992347,1157.4],[37.534796,126.992371,1162.4],[37.53478,126.992401,1167.4],[37.534777,126.992407,1172.4],[37.53477,126.992418,1177.4],[37.534766,126.992425,1182.5],[37.534761,126.992437,1188.5],[37.534759,126.992444,1194.5],[37.53476,126.992452,1200.5],[37.534763,126.992489,1203.5],[37.53476,126.992527,1207.5],[37.534746,126.992571,1211.5],[37.534735,126.99261,1212.5],[37.534729,126.992636,1218.5],[37.534723,126.99266,1224.5],[37.534713,126.992694,1230.5],[37.534741,126.992654,1233.5],[37.534751,126.992621,1234.5],[37.534743,126.992647,1239.5],[37.534733,126.992679,1244.5],[37.534726,126.992698,1249.5],[37.534733,126.992679,1254.5],[37.534733,126.992682,1259.5],[37.534724,126.992713,1264.5],[37.534719,126.99275,1269.5],[37.534719,126.99277,1274.5],[37.53472,126.99278,1279.5],[37.534723,126.992817,1283.5],[37.534728,126.992865,1286.5],[37.534734,126.992902,1289.5],[37.534738,126.992929,1294.6],[37.534739,126.992944,1300.6],[37.534746,126.993005,1304.6],[37.53475,126.99304,1308.6],[37.53475,126.993037,1314.6],[37.534753,126.993048,1320.6],[37.534754,126.99309,1325.6],[37.534753,126.993127,1330.6],[37.534753,126.993144,1335.6],[37.534752,126.993173,1340.6],[37.534751,126.993211,1342.6],[37.53475,126.993247,1344.6],[37.534749,126.993279,1349.6],[37.534749,126.993263,1354.6],[37.534749,126.993263,1359.6],[37.53475,126.993263,1364.6],[37.534749,126.993267,1369.6],[37.534782,126.993283,1373.6],[37.534787,126.993275,1378.6],[37.534787,126.993279,1383.7],[37.534801,126.993287,1389.7],[37.534802,126.993283,1395.7],[37.534803,126.993279,1401.7],[37.534804,126.993278,1407.7],[37.534804,126.993277,1413.7],[37.534796,126.993319,1417.7],[37.534787,126.993363,1419.7],[37.534787,126.993367,1425.7],[37.534781,126.993397,1430.7],[37.534779,126.99341,1435.7],[37.534786,126.993375,1437.7],[37.534788,126.993366,1442.7],[37.534788,126.993366,1447.7],[37.534788,126.993366,1452.7],[37.534788,126.993366,1457.7],[37.534788,126.993366,1462.7],[37.534787,126.993366,1467.7],[37.534793,126.993372,1472.7],[37.534797,126.993373,1477.7],[37.53478,126.993365,1482.8],[37.534767,126.993363,1488.8],[37.534739,126.993349,1492.8],[37.53472,126.993416,1496.8],[37.534717,126.993446,1502.8],[37.534695,126.993439,1508.8],[37.534676,126.993432,1514.8],[37.53469,126.993438,1520.8],[37.534701,126.993443,1526.8],[37.534703,126.993441,1531.8],[37.534721,126.993466,1534.8],[37.534742,126.993505,1539.8],[37.53475,126.993508,1544.8],[37.534751,126.993509,1549.8],[37.534754,126.99351,1554.8],[37.534754,126.99351,1559.8],[37.534759,126.993512,1564.8],[37.534759,126.993512,1569.8],[37.534762,126.993513,1574.8],[37.534767,126.993515,1579.8],[37.534792,126.993528,1584.8],[37.534798,126.993532,1589.8],[37.534809,126.99354,1594.9],[37.534831,126.993562,1598.9],[37.534867,126.993578,1602.9],[37.534872,126.993579,1608.9],[37.534874,126.993578,1614.9],[37.534864,126.993562,1620.9],[37.534839,126.993533,1624.9],[37.534805,126.993529,1627.9],[37.534775,126.993519,1630.9],[37.534774,126.993509,1635.9],[37.534764,126.993508,1640.9],[37.534752,126.993516,1645.9],[37.534749,126.993555,1650.9],[37.534744,126.993592,1654.9],[37.534748,126.993607,1659.9],[37.534756,126.993646,1663.9],[37.534758,126.99365,1668.9],[37.53475,126.993617,1673.9],[37.534749,126.993616,1678.9],[37.534746,126.99359,1684.0],[37.534751,126.99363,1688.0],[37.534749,126.993623,1694.0],[37.534728,126.993587,1697.0],[37.534719,126.993576,1703.0],[37.534719,126.993576,1709.0],[37.534701,126.993603,1713.0],[37.534676,126.993621,1716.0],[37.534647,126.993642,1720.0],[37.534633,126.99367,1726.0],[37.53461,126.993721,1729.0],[37.534593,126.993749,1731.0],[37.534543,126.993822,1733.0],[37.534484,126.993913,1734.0],[37.534445,126.994008,1735.0],[37.534423,126.993984,1736.0],[37.534373,126.994039,1738.0],[37.534355,126.994067,1739.0],[37.534355,126.994067,1744.0],[37.534355,126.994067,1749.0],[37.534359,126.99408,1754.0],[37.534363,126.994086,1759.0],[37.534374,126.994127,1761.0],[37.534373,126.994167,1765.0],[37.534384,126.994183,1770.0],[37.534387,126.994211,1775.0],[37.53438,126.994265,1778.0],[37.534402,126.994289,1782.0],[37.534399,126.994284,1787.0],[37.534423,126.994331,1790.0],[37.534432,126.994376,1791.1],[37.53443,126.994414,1796.1],[37.534404,126.994399,1801.1],[37.5344,126.99438,1807.1],[37.534424,126.994357,1813.1],[37.534426,126.994353,1819.1],[37.534452,126.994332,1821.1],[37.534459,126.994297,1823.1],[37.534459,126.9943,1829.1],[37.534456,126.994297,1834.1],[37.534455,126.994302,1839.1],[37.534456,126.994303,1844.1],[37.534458,126.994301,1849.1],[37.534458,126.994293,1854.1],[37.534458,126.994297,1859.1],[37.534455,126.994326,1864.1],[37.534455,126.994326,1869.1],[37.534455,126.994331,1874.1],[37.534455,126.994317,1879.1],[37.534459,126.994281,1883.2],[37.534463,126.994276,1889.2],[37.534467,126.994304,1895.2],[37.534461,126.994337,1900.2],[37.534457,126.994372,1904.2],[37.534469,126.994416,1910.2],[37.534487,126.99441,1916.2],[37.534498,126.994375,1921.2],[37.534502,126.99436,1927.2],[37.534498,126.994371,1932.2],[37.534498,126.994371,1937.2],[37.53451,126.994377,1942.2],[37.534527,126.994409,1947.2],[37.53455,126.994435,1950.2],[37.534571,126.994469,1953.2],[37.534567,126.994517,1956.2],[37.534571,126.994565,1961.2],[37.534586,126.994598,1963.2],[37.534592,126.994631,1965.2],[37.534595,126.994668,1967.2],[37.534599,126.994706,1969.2],[37.534602,126.994723,1974.2],[37.534602,126.994723,1979.2],[37.534603,126.994732,1984.2],[37.534604,126.99474,1989.2],[37.534608,126.99477,1994.3],[37.534607,126.994768,2000.3],[37.534626,126.994799,2003.3],[37.534647,126.994837,2006.3],[37.534659,126.994878,2009.3],[37.534659,126.994916,2012.3],[37.534657,126.994951,2015.3],[37.534657,126.995002,2018.3],[37.534658,126.995046,2020.3],[37.53466,126.995083,2023.3],[37.534662,126.995125,2026.3],[37.534666,126.995169,2029.3],[37.534669,126.995208,2032.3],[37.534662,126.995252,2036.3],[37.53465,126.995288,2039.3],[37.534651,126.99531,2044.3],[37.534643,126.995345,2047.3],[37.534639,126.995379,2050.3],[37.534639,126.995418,2053.3],[37.534636,126.99546,2057.3],[37.534636,126.995464,2062.3],[37.534593,126.995576,2067.3],[37.534564,126.995619,2068.3],[37.534544,126.995634,2073.3],[37.534471,126.995699,2076.3],[37.534423,126.995761,2078.3],[37.534399,126.995851,2081.3],[37.534356,126.99586,2082.3],[37.53432,126.995862,2083.3],[37.534309,126.995863,2088.3],[37.534276,126.995861,2092.4],[37.534245,126.995859,2095.4],[37.534214,126.995849,2099.4],[37.534186,126.995858,2104.4],[37.534177,126.99587,2110.4],[37.534172,126.99589,2116.4],[37.534169,126.995925,2121.4],[37.534174,126.995963,2126.4],[37.534173,126.995971,2131.4],[37.534174,126.996007,2134.4],[37.53417,126.996044,2138.4],[37.534169,126.996055,2143.4],[37.534154,126.996084,2146.4],[37.534153,126.996098,2151.4],[37.534152,126.996135,2155.4],[37.534146,126.99617,2160.4],[37.534151,126.996167,2165.4],[37.534151,126.996167,2170.4],[37.534151,126.996203,2173.4],[37.534143,126.996228,2178.4],[37.534132,126.996261,2182.4],[37.534127,126.9963,2186.4],[37.534128,126.996329,2191.5],[37.534125,126.996369,2197.5],[37.534112,126.996405,2202.5],[37.5341,126.996449,2205.5],[37.534102,126.996502,2210.5],[37.534104,126.996547,2212.5],[37.534105,126.996589,2214.5],[37.534108,126.996629,2216.5],[37.534111,126.996663,2218.5],[37.53411,126.996705,2223.5],[37.534109,126.996732,2229.5],[37.53411,126.996742,2234.5],[37.534109,126.996735,2239.5],[37.5341,126.99675,2244.5],[37.53409,126.996757,2249.5],[37.534062,126.996762,2253.5],[37.534035,126.996759,2257.5],[37.534015,126.996757,2262.5],[37.533992,126.996745,2267.5],[37.533965,126.996749,2272.5],[37.533928,126.996754,2275.5],[37.533897,126.996759,2279.5],[37.533869,126.996759,2283.6],[37.533832,126.996757,2285.6],[37.533802,126.996751,2291.6],[37.533775,126.996746,2295.6],[37.533737,126.996739,2298.6],[37.533673,126.996731,2299.6],[37.533652,126.996762,2300.6],[37.533655,126.996814,2301.6],[37.533652,126.996917,2307.6],[37.53365,126.997041,2308.6],[37.533649,126.997125,2309.6],[37.533648,126.997168,2312.6],[37.533652,126.997209,2315.6],[37.533655,126.997215,2321.6],[37.533618,126.997218,2326.6],[37.533574,126.997222,2327.6],[37.533599,126.997269,2331.6],[37.533637,126.997289,2332.6],[37.533691,126.997306,2333.6],[37.533708,126.99734,2334.6],[37.533724,126.99736,2339.6],[37.533752,126.997362,2341.6],[37.533788,126.997366,2342.6],[37.533784,126.997316,2347.6],[37.533781,126.997281,2349.6],[37.533768,126.997229,2352.6],[37.533752,126.997197,2355.6],[37.53372,126.997123,2357.6],[37.533715,126.997051,2360.6],[37.533721,126.997001,2362.6],[37.533724,126.996962,2366.6],[37.533723,126.996949,2371.6],[37.53371,126.996919,2376.6],[37.53371,126.996899,2381.7],[37.533712,126.996864,2383.7],[37.53371,126.996821,2386.7],[37.533702,126.996786,2389.7],[37.533695,126.996745,2392.7],[37.533683,126.996698,2395.7],[37.533673,126.996645,2398.7],[37.533669,126.99661,2400.7],[37.533661,126.996577,2402.7],[37.533652,126.996532,2405.7],[37.533645,126.996498,2407.7],[37.53364,126.996463,2409.7],[37.533631,126.996429,2411.7],[37.533619,126.996391,2414.7],[37.533609,126.996357,2419.7],[37.533588,126.996312,2422.7],[37.533581,126.99627,2425.7],[37.533578,126.996235,2431.7],[37.533578,126.996227,2436.7],[37.533578,126.996227,2441.7],[37.533578,126.996226,2446.7],[37.533577,126.996195,2451.7],[37.533593,126.996158,2453.7],[37.533622,126.996147,2455.7],[37.533622,126.996146,2461.6],[37.533623,126.996143,2466.6],[37.533624,126.99614,2471.6],[37.533622,126.996118,2476.6],[37.533619,126.996089,2481.6],[37.5336,126.996062,2486.7],[37.533588,126.996051,2492.7],[37.533557,126.996029,2496.7],[37.533526,126.996022,2500.7],[37.533495,126.996008,2504.7],[37.533458,126.996004,2507.7],[37.533427,126.995999,2510.7],[37.533396,126.995983,2513.7],[37.533362,126.995982,2517.7],[37.533326,126.99599,2521.7],[37.533294,126.995997,2525.7],[37.533282,126.996004,2531.7],[37.533278,126.996008,2536.7],[37.533265,126.996041,2540.7],[37.533258,126.996077,2543.7],[37.533257,126.996071,2548.7],[37.533261,126.996022,2550.7],[37.533263,126.996026,2555.7],[37.533264,126.996001,2560.7],[37.533267,126.996006,2565.7],[37.533273,126.99601,2570.7],[37.533274,126.996019,2575.7],[37.533281,126.996022,2580.7],[37.533287,126.996039,2585.8],[37.5333,126.996071,2590.8],[37.533308,126.996106,2596.8],[37.533314,126.996142,2599.8],[37.533327,126.996183,2603.8],[37.533335,126.996218,2606.8],[37.533338,126.996258,2609.8],[37.533339,126.996283,2615.8],[37.533341,126.996319,2618.8],[37.533342,126.996349,2624.8],[37.533349,126.996392,2629.8],[37.533347,126.996426,2634.8],[37.53334,126.996471,2637.8],[37.53334,126.996508,2639.8],[37.533339,126.996543,2640.8],[37.533337,126.996578,2642.8],[37.533334,126.996601,2647.8],[37.533325,126.99667,2648.8],[37.533311,126.996783,2649.8],[37.533304,126.996838,2650.8],[37.533299,126.996877,2652.8],[37.533292,126.996923,2656.8],[37.533273,126.996969,2658.8],[37.533263,126.997016,2662.8],[37.533254,126.997052,2664.8],[37.533243,126.997103,2667.8],[37.533239,126.997137,2668.8],[37.533231,126.997194,2669.8],[37.533223,126.997261,2670.8],[37.533222,126.997264,2675.8],[37.533217,126.997272,2680.8],[37.533215,126.99731,2684.8],[37.53322,126.997352,2686.9],[37.533222,126.997396,2688.9],[37.533222,126.997442,2691.9],[37.533223,126.997452,2697.9],[37.533222,126.997452,2703.9],[37.533237,126.99747,2709.9],[37.533241,126.997497,2715.9],[37.533229,126.997491,2721.9],[37.53322,126.997531,2726.9],[37.533211,126.997568,2729.9],[37.533203,126.997602,2733.9],[37.533194,126.997636,2738.9],[37.53319,126.997667,2743.9],[37.533186,126.997691,2748.9],[37.533183,126.997707,2753.9],[37.533178,126.997746,2756.9],[37.533173,126.997785,2761.9],[37.533173,126.997785,2766.9],[37.533177,126.997764,2771.9],[37.533163,126.99774,2776.9],[37.533151,126.997702,2780.9],[37.533143,126.997715,2786.0],[37.533115,126.997699,2789.0],[37.533104,126.997736,2795.0],[37.533112,126.997698,2799.0],[37.533126,126.997702,2805.0],[37.533132,126.997702,2811.0],[37.533137,126.997695,2817.0],[37.533139,126.997674,2823.0],[37.533054,126.997697,2828.1],[37.533046,126.997734,2832.1],[37.533041,126.997772,2834.1],[37.533018,126.997803,2839.1],[37.532988,126.997822,2841.1],[37.532958,126.997838,2843.2],[37.532923,126.997854,2845.2],[37.532902,126.997875,2851.2],[37.532872,126.9979,2854.2],[37.532833,126.997933,2856.2],[37.532818,126.997943,2862.2],[37.532795,126.997963,2865.2],[37.532771,126.997984,2867.2],[37.532767,126.99799,2873.2],[37.532772,126.997989,2879.2],[37.532773,126.997992,2885.2],[37.532774,126.997995,2891.2],[37.532778,126.997996,2896.2],[37.532784,126.997993,2901.2],[37.532784,126.997993,2906.2],[37.532774,126.998002,2911.2],[37.53276,126.998023,2916.2],[37.532748,126.99804,2921.2],[37.532728,126.998075,2925.2],[37.532722,126.998088,2930.2],[37.532723,126.998096,2935.2],[37.532724,126.998098,2940.2],[37.532724,126.99811,2945.3],[37.532727,126.998119,2951.3],[37.532728,126.998121,2957.3],[37.532727,126.998136,2963.3],[37.532707,126.99817,2968.3],[37.532686,126.998213,2970.3],[37.53269,126.998222,2976.3],[37.532711,126.998192,2980.3],[37.532721,126.998191,2986.3],[37.532722,126.998191,2992.3],[37.532722,126.998191,2997.3],[37.532722,126.998191,3002.3],[37.532722,126.998191,3007.3],[37.532724,126.998187,3012.3],[37.532728,126.998176,3017.3],[37.53273,126.998175,3022.3],[37.53273,126.998174,3027.3],[37.53273,126.998174,3032.3],[37.532732,126.998174,3037.3],[37.532734,126.998172,3042.3],[37.532736,126.998171,3047.4],[37.532736,126.998171,3053.4],[37.532736,126.998171,3059.4],[37.532736,126.998171,3065.4],[37.532736,126.998171,3071.4],[37.532736,126.998171,3077.4]],"dur":3083.35},"lunch":{"times":{"p1":[0,396],"p2":[1371,1911],"p3":[2931,3021],"p4":[3306,3426],"p5":[3741,4184]},"track":[[37.536067,126.989759,46.5],[37.536067,126.989745,50.5],[37.536095,126.989807,52.1],[37.536105,126.989839,54.4],[37.536118,126.989858,58.4],[37.536128,126.989855,62.4],[37.536122,126.989838,66.4],[37.536125,126.989828,70.4],[37.536133,126.989794,74.4],[37.536155,126.989757,77.6],[37.536174,126.989745,82.4],[37.536195,126.989793,87.2],[37.536205,126.989829,91.2],[37.536211,126.989833,96.0],[37.536205,126.989767,98.4],[37.536203,126.989773,103.1],[37.536198,126.989802,107.1],[37.536209,126.989816,111.1],[37.536217,126.98982,115.1],[37.536217,126.98982,119.1],[37.536222,126.989806,123.1],[37.536223,126.989785,127.1],[37.536221,126.989788,131.0],[37.536231,126.989789,135.0],[37.536226,126.989787,139.0],[37.536211,126.989767,143.0],[37.536187,126.989748,147.0],[37.536165,126.98973,151.1],[37.536163,126.989707,155.8],[37.536166,126.989698,160.6],[37.536176,126.989682,165.4],[37.536166,126.989692,170.2],[37.536181,126.989718,175.0],[37.536165,126.989734,179.7],[37.536165,126.989734,183.7],[37.536165,126.989734,187.7],[37.536165,126.989734,191.7],[37.536165,126.989734,195.7],[37.536165,126.989734,199.7],[37.536165,126.989734,203.7],[37.536165,126.989734,207.6],[37.536165,126.989734,211.6],[37.536165,126.989734,215.6],[37.536142,126.989716,219.6],[37.536126,126.98971,223.7],[37.536103,126.9897,228.4],[37.536103,126.9897,233.2],[37.536101,126.9897,238.0],[37.536094,126.989706,242.8],[37.53609,126.98969,247.6],[37.536092,126.989676,252.4],[37.536099,126.989686,257.1],[37.536106,126.989686,261.9],[37.536122,126.989688,265.9],[37.536153,126.98969,269.9],[37.536174,126.989693,273.9],[37.536172,126.989696,277.9],[37.536172,126.989696,281.9],[37.536172,126.989696,285.8],[37.536172,126.989696,289.8],[37.536172,126.989696,293.8],[37.536172,126.989696,297.8],[37.536167,126.989689,301.8],[37.536163,126.989684,305.8],[37.536133,126.98968,308.2],[37.536109,126.989668,312.2],[37.536109,126.989668,317.0],[37.536105,126.989668,321.8],[37.536099,126.989668,326.6],[37.536076,126.989666,331.4],[37.536054,126.989664,336.1],[37.536039,126.989668,340.9],[37.536024,126.989667,344.9],[37.535994,126.989665,348.9],[37.535995,126.989666,352.9],[37.53599,126.989666,356.9],[37.535968,126.989674,360.8],[37.535965,126.989687,364.8],[37.535965,126.989687,368.8],[37.535965,126.989687,372.8],[37.535975,126.989687,376.8],[37.536007,126.989684,380.8],[37.536037,126.989692,384.0],[37.536058,126.989696,388.8],[37.536085,126.989716,392.0],[37.536113,126.989739,396.7],[37.53614,126.989768,398.9],[37.536157,126.989797,401.0],[37.536164,126.98983,403.2],[37.536171,126.989876,406.1],[37.536178,126.989913,407.5],[37.536188,126.989936,411.9],[37.536209,126.98996,416.2],[37.536235,126.989989,419.1],[37.536251,126.990008,422.7],[37.536252,126.990011,426.3],[37.536255,126.990023,429.9],[37.536271,126.990053,432.8],[37.536297,126.990082,434.2],[37.536316,126.990105,437.8],[37.536316,126.990105,441.4],[37.536284,126.990118,444.3],[37.536256,126.99012,446.5],[37.536253,126.99012,450.1],[37.53623,126.990136,453.7],[37.536163,126.990162,455.9],[37.536124,126.990174,456.6],[37.536091,126.990187,457.3],[37.536064,126.990199,458.8],[37.536038,126.990212,461.0],[37.536006,126.990227,463.1],[37.535981,126.99023,467.4],[37.535959,126.990228,471.8],[37.535953,126.990228,476.1],[37.535915,126.99023,479.0],[37.535897,126.990232,483.3],[37.535897,126.990232,487.6],[37.535913,126.990247,491.9],[37.535933,126.990251,495.6],[37.535908,126.990253,499.2],[37.535929,126.990253,502.8],[37.535927,126.990254,506.4],[37.535925,126.990256,510.0],[37.535932,126.990265,513.6],[37.535941,126.990281,517.2],[37.535937,126.990291,520.8],[37.535912,126.990327,524.4],[37.535884,126.990363,525.8],[37.535855,126.990403,527.3],[37.535835,126.990428,528.8],[37.535809,126.990463,530.2],[37.535767,126.990513,530.9],[37.535758,126.990524,535.3],[37.535744,126.990551,539.6],[37.535729,126.99059,542.5],[37.535716,126.990623,543.9],[37.535695,126.990661,546.1],[37.535671,126.99068,548.2],[37.535662,126.990682,552.6],[37.535643,126.990689,556.9],[37.535607,126.990707,560.5],[37.535569,126.990733,562.7],[37.53553,126.990761,564.1],[37.535518,126.990767,567.7],[37.535494,126.990768,571.3],[37.535446,126.990774,572.8],[37.535413,126.990776,574.2],[37.53537,126.990774,577.1],[37.53535,126.990772,580.7],[37.535356,126.990807,584.3],[37.535341,126.990844,585.7],[37.535312,126.990891,587.2],[37.535295,126.990932,588.6],[37.535289,126.990995,590.8],[37.53529,126.991003,594.4],[37.53529,126.991003,598.0],[37.535263,126.991012,600.9],[37.535232,126.991015,603.8],[37.535208,126.991014,607.4],[37.535174,126.991026,610.3],[37.535158,126.991029,614.6],[37.535139,126.991022,619.0],[37.535111,126.991007,621.9],[37.535132,126.991022,626.2],[37.53513,126.991021,630.5],[37.535157,126.991042,634.8],[37.535167,126.991049,638.4],[37.535165,126.991049,642.0],[37.535161,126.991047,645.6],[37.535171,126.991077,649.2],[37.535165,126.991112,651.4],[37.535155,126.991145,652.8],[37.535135,126.991189,654.3],[37.535124,126.991211,657.9],[37.535124,126.991211,661.5],[37.535108,126.9912,665.1],[37.535084,126.991184,668.7],[37.535082,126.991183,672.3],[37.535082,126.991184,675.9],[37.535056,126.991166,678.8],[37.535083,126.991185,682.5],[37.535073,126.991238,685.4],[37.535068,126.99125,689.7],[37.535104,126.991277,694.0],[37.535148,126.991309,696.2],[37.535169,126.991316,700.5],[37.535194,126.991341,704.8],[37.535222,126.99136,706.3],[37.535233,126.9914,708.4],[37.535248,126.99144,709.9],[37.53526,126.991465,713.5],[37.535267,126.991459,717.1],[37.535264,126.991497,719.2],[37.535271,126.991544,721.4],[37.535255,126.991593,722.8],[37.535251,126.991622,726.4],[37.535259,126.991659,730.1],[37.535266,126.991694,732.2],[37.535274,126.991733,733.7],[37.53528,126.991777,735.8],[37.535282,126.991802,739.4],[37.535283,126.991806,743.0],[37.535287,126.99185,744.5],[37.535285,126.991855,748.1],[37.535254,126.991852,751.8],[37.535235,126.991856,756.1],[37.535215,126.991879,758.2],[37.535198,126.991913,761.1],[37.535187,126.991941,765.4],[37.535172,126.991957,769.8],[37.535146,126.99197,783.7],[37.535114,126.991981,806.8],[37.535102,126.991985,826.1],[37.535112,126.991987,845.4],[37.535101,126.991991,864.6],[37.535074,126.991999,876.2],[37.535037,126.992012,891.6],[37.535003,126.992028,903.2],[37.535,126.99203,922.4],[37.535,126.99203,941.7],[37.534984,126.992052,961.0],[37.535036,126.992036,976.4],[37.535008,126.992046,995.6],[37.535018,126.992055,1014.9],[37.535037,126.992056,1034.2],[37.535018,126.992063,1053.8],[37.534989,126.992077,1069.2],[37.534986,126.99208,1092.4],[37.534986,126.99208,1115.5],[37.534956,126.992101,1138.6],[37.534932,126.992121,1150.2],[37.534922,126.992142,1173.3],[37.534904,126.992175,1192.4],[37.534883,126.992212,1195.4],[37.534862,126.992251,1198.4],[37.534857,126.99226,1203.4],[37.534844,126.992284,1208.4],[37.534827,126.992315,1212.4],[37.534815,126.992337,1217.5],[37.534809,126.992347,1222.5],[37.534796,126.992371,1227.5],[37.53478,126.992401,1232.5],[37.534777,126.992407,1237.5],[37.53477,126.992418,1242.5],[37.534766,126.992425,1247.6],[37.534761,126.992437,1253.6],[37.534759,126.992444,1259.7],[37.53476,126.992452,1265.7],[37.534763,126.992489,1268.7],[37.53476,126.992527,1272.7],[37.534746,126.992571,1276.7],[37.534735,126.99261,1277.7],[37.534729,126.992636,1283.7],[37.534723,126.99266,1289.7],[37.534713,126.992694,1295.7],[37.534741,126.992654,1298.7],[37.534751,126.992621,1299.7],[37.534743,126.992647,1304.8],[37.534733,126.992679,1309.8],[37.534726,126.992698,1314.8],[37.534733,126.992679,1319.8],[37.534733,126.992682,1324.8],[37.534724,126.992713,1329.8],[37.534719,126.99275,1334.8],[37.534719,126.99277,1339.8],[37.53472,126.99278,1344.8],[37.534723,126.992817,1348.9],[37.534728,126.992865,1351.9],[37.534734,126.992902,1354.9],[37.534738,126.992929,1360.0],[37.534739,126.992944,1366.0],[37.534746,126.993005,1370.0],[37.53475,126.99304,1374.8],[37.53475,126.993037,1382.5],[37.534753,126.993048,1390.2],[37.534754,126.99309,1396.6],[37.534753,126.993127,1403.0],[37.534753,126.993144,1409.4],[37.534752,126.993173,1415.9],[37.534751,126.993211,1418.4],[37.53475,126.993247,1421.0],[37.534749,126.993279,1427.4],[37.534749,126.993263,1433.8],[37.534749,126.993263,1440.2],[37.53475,126.993263,1446.6],[37.534749,126.993267,1453.0],[37.534782,126.993283,1458.1],[37.534787,126.993275,1464.5],[37.534787,126.993279,1471.1],[37.534801,126.993287,1478.8],[37.534802,126.993283,1486.5],[37.534803,126.993279,1494.1],[37.534804,126.993278,1501.8],[37.534804,126.993277,1509.5],[37.534796,126.993319,1514.6],[37.534787,126.993363,1517.2],[37.534787,126.993367,1524.9],[37.534781,126.993397,1531.3],[37.534779,126.99341,1537.7],[37.534786,126.993375,1540.3],[37.534788,126.993366,1546.7],[37.534788,126.993366,1553.1],[37.534788,126.993366,1559.5],[37.534788,126.993366,1565.9],[37.534788,126.993366,1572.3],[37.534787,126.993366,1578.7],[37.534793,126.993372,1585.1],[37.534797,126.993373,1591.5],[37.53478,126.993365,1598.1],[37.534767,126.993363,1605.8],[37.534739,126.993349,1610.9],[37.53472,126.993416,1616.0],[37.534717,126.993446,1623.7],[37.534695,126.993439,1631.4],[37.534676,126.993432,1639.1],[37.53469,126.993438,1646.8],[37.534701,126.993443,1654.5],[37.534703,126.993441,1660.9],[37.534721,126.993466,1664.7],[37.534742,126.993505,1671.1],[37.53475,126.993508,1677.5],[37.534751,126.993509,1683.9],[37.534754,126.99351,1690.3],[37.534754,126.99351,1696.7],[37.534759,126.993512,1703.1],[37.534759,126.993512,1709.6],[37.534762,126.993513,1716.0],[37.534767,126.993515,1722.4],[37.534792,126.993528,1728.8],[37.534798,126.993532,1735.2],[37.534809,126.99354,1741.7],[37.534831,126.993562,1746.8],[37.534867,126.993578,1752.0],[37.534872,126.993579,1759.7],[37.534874,126.993578,1767.4],[37.534864,126.993562,1775.0],[37.534839,126.993533,1780.2],[37.534805,126.993529,1784.0],[37.534775,126.993519,1787.9],[37.534774,126.993509,1794.3],[37.534764,126.993508,1800.7],[37.534752,126.993516,1807.1],[37.534749,126.993555,1813.5],[37.534744,126.993592,1818.6],[37.534748,126.993607,1825.0],[37.534756,126.993646,1830.1],[37.534758,126.99365,1836.5],[37.53475,126.993617,1843.0],[37.534749,126.993616,1849.4],[37.534746,126.99359,1855.9],[37.534751,126.99363,1861.0],[37.534749,126.993623,1868.7],[37.534728,126.993587,1872.6],[37.534719,126.993576,1880.2],[37.534719,126.993576,1887.9],[37.534701,126.993603,1893.1],[37.534676,126.993621,1896.9],[37.534647,126.993642,1902.0],[37.534633,126.99367,1909.7],[37.53461,126.993721,1913.5],[37.534593,126.993749,1916.1],[37.534543,126.993822,1918.6],[37.534484,126.993913,1919.9],[37.534445,126.994008,1921.2],[37.534423,126.993984,1922.4],[37.534373,126.994039,1925.0],[37.534355,126.994067,1926.3],[37.534355,126.994067,1932.6],[37.534355,126.994067,1939.0],[37.534359,126.99408,1945.3],[37.534363,126.994086,1951.7],[37.534374,126.994127,1954.2],[37.534373,126.994167,1959.3],[37.534384,126.994183,1965.7],[37.534387,126.994211,1972.0],[37.53438,126.994265,1975.9],[37.534402,126.994289,1981.0],[37.534399,126.994284,1987.3],[37.534423,126.994331,1991.1],[37.534432,126.994376,1992.5],[37.53443,126.994414,1998.9],[37.534404,126.994399,2005.2],[37.5344,126.99438,2012.9],[37.534424,126.994357,2020.5],[37.534426,126.994353,2028.1],[37.534452,126.994332,2030.7],[37.534459,126.994297,2033.2],[37.534459,126.9943,2040.9],[37.534456,126.994297,2047.2],[37.534455,126.994302,2053.6],[37.534456,126.994303,2059.9],[37.534458,126.994301,2066.3],[37.534458,126.994293,2072.7],[37.534458,126.994297,2079.0],[37.534455,126.994326,2085.4],[37.534455,126.994326,2091.7],[37.534455,126.994331,2098.1],[37.534455,126.994317,2104.4],[37.534459,126.994281,2109.7],[37.534463,126.994276,2117.3],[37.534467,126.994304,2124.9],[37.534461,126.994337,2131.3],[37.534457,126.994372,2136.4],[37.534469,126.994416,2144.0],[37.534487,126.99441,2151.6],[37.534498,126.994375,2158.0],[37.534502,126.99436,2165.6],[37.534498,126.994371,2172.0],[37.534498,126.994371,2178.3],[37.53451,126.994377,2184.7],[37.534527,126.994409,2191.1],[37.53455,126.994435,2194.9],[37.534571,126.994469,2198.7],[37.534567,126.994517,2202.5],[37.534571,126.994565,2208.9],[37.534586,126.994598,2211.4],[37.534592,126.994631,2214.0],[37.534595,126.994668,2216.5],[37.534599,126.994706,2219.0],[37.534602,126.994723,2225.4],[37.534602,126.994723,2231.8],[37.534603,126.994732,2238.1],[37.534604,126.99474,2244.5],[37.534608,126.99477,2251.0],[37.534607,126.994768,2258.6],[37.534626,126.994799,2262.4],[37.534647,126.994837,2266.2],[37.534659,126.994878,2270.0],[37.534659,126.994916,2273.9],[37.534657,126.994951,2277.7],[37.534657,126.995002,2281.5],[37.534658,126.995046,2284.0],[37.53466,126.995083,2287.9],[37.534662,126.995125,2291.7],[37.534666,126.995169,2295.5],[37.534669,126.995208,2299.3],[37.534662,126.995252,2304.4],[37.53465,126.995288,2308.2],[37.534651,126.99531,2314.6],[37.534643,126.995345,2318.4],[37.534639,126.995379,2322.2],[37.534639,126.995418,2326.0],[37.534636,126.99546,2331.1],[37.534636,126.995464,2337.5],[37.534593,126.995576,2343.8],[37.534564,126.995619,2345.1],[37.534544,126.995634,2351.4],[37.534471,126.995699,2355.3],[37.534423,126.995761,2357.8],[37.534399,126.995851,2361.6],[37.534356,126.99586,2362.9],[37.53432,126.995862,2364.2],[37.534309,126.995863,2370.5],[37.534276,126.995861,2375.7],[37.534245,126.995859,2379.6],[37.534214,126.995849,2384.6],[37.534186,126.995858,2391.0],[37.534177,126.99587,2395.6],[37.534172,126.99589,2400.2],[37.534169,126.995925,2404.1],[37.534174,126.995963,2407.9],[37.534173,126.995971,2411.8],[37.534174,126.996007,2414.1],[37.53417,126.996044,2417.2],[37.534169,126.996055,2421.0],[37.534154,126.996084,2423.3],[37.534153,126.996098,2427.2],[37.534152,126.996135,2430.2],[37.534146,126.99617,2434.1],[37.534151,126.996167,2437.9],[37.534151,126.996167,2441.8],[37.534151,126.996203,2444.1],[37.534143,126.996228,2447.9],[37.534132,126.996261,2451.0],[37.534127,126.9963,2457.7],[37.534128,126.996329,2466.1],[37.534125,126.996369,2476.1],[37.534112,126.996405,2484.5],[37.5341,126.996449,2489.5],[37.534102,126.996502,2497.8],[37.534104,126.996547,2501.1],[37.534105,126.996589,2504.4],[37.534108,126.996629,2507.8],[37.534111,126.996663,2511.1],[37.53411,126.996705,2519.4],[37.534109,126.996732,2529.4],[37.53411,126.996742,2537.7],[37.534109,126.996735,2546.1],[37.5341,126.99675,2554.4],[37.53409,126.996757,2562.7],[37.534062,126.996762,2569.4],[37.534035,126.996759,2576.0],[37.534015,126.996757,2584.4],[37.533992,126.996745,2592.7],[37.533965,126.996749,2601.0],[37.533928,126.996754,2606.0],[37.533897,126.996759,2612.7],[37.533869,126.996759,2619.5],[37.533832,126.996757,2622.8],[37.533802,126.996751,2632.8],[37.533775,126.996746,2639.5],[37.533737,126.996739,2644.5],[37.533673,126.996731,2646.1],[37.533652,126.996762,2647.8],[37.533655,126.996814,2649.4],[37.533652,126.996917,2659.4],[37.53365,126.997041,2661.1],[37.533649,126.997125,2662.8],[37.533648,126.997168,2667.8],[37.533652,126.997209,2672.8],[37.533655,126.997215,2682.7],[37.533618,126.997218,2691.1],[37.533574,126.997222,2692.7],[37.533599,126.997269,2699.4],[37.533637,126.997289,2701.1],[37.533691,126.997306,2702.7],[37.533708,126.99734,2704.4],[37.533724,126.99736,2712.7],[37.533752,126.997362,2716.0],[37.533788,126.997366,2717.7],[37.533784,126.997316,2726.0],[37.533781,126.997281,2729.4],[37.533768,126.997229,2734.4],[37.533752,126.997197,2739.3],[37.53372,126.997123,2742.7],[37.533715,126.997051,2747.7],[37.533721,126.997001,2751.0],[37.533724,126.996962,2763.2],[37.533723,126.996949,2778.4],[37.53371,126.996919,2793.6],[37.53371,126.996899,2809.2],[37.533712,126.996864,2815.3],[37.53371,126.996821,2824.4],[37.533702,126.996786,2833.5],[37.533695,126.996745,2842.7],[37.533683,126.996698,2851.8],[37.533673,126.996645,2860.9],[37.533669,126.99661,2867.0],[37.533661,126.996577,2873.1],[37.533652,126.996532,2882.3],[37.533645,126.996498,2888.4],[37.53364,126.996463,2894.5],[37.533631,126.996429,2900.5],[37.533619,126.996391,2909.7],[37.533609,126.996357,2924.9],[37.533588,126.996312,2932.1],[37.533581,126.99627,2935.6],[37.533578,126.996235,2942.4],[37.533578,126.996227,2948.1],[37.533578,126.996227,2953.8],[37.533578,126.996226,2959.5],[37.533577,126.996195,2965.2],[37.533593,126.996158,2967.5],[37.533622,126.996147,2969.7],[37.533622,126.996146,2976.5],[37.533623,126.996143,2982.2],[37.533624,126.99614,2987.8],[37.533622,126.996118,2993.5],[37.533619,126.996089,2999.2],[37.5336,126.996062,3005.1],[37.533588,126.996051,3011.9],[37.533557,126.996029,3016.4],[37.533526,126.996022,3021.0],[37.533495,126.996008,3023.0],[37.533458,126.996004,3024.5],[37.533427,126.995999,3026.0],[37.533396,126.995983,3027.5],[37.533362,126.995982,3029.5],[37.533326,126.99599,3031.5],[37.533294,126.995997,3033.5],[37.533282,126.996004,3036.5],[37.533278,126.996008,3039.0],[37.533265,126.996041,3041.0],[37.533258,126.996077,3042.5],[37.533257,126.996071,3045.0],[37.533261,126.996022,3046.0],[37.533263,126.996026,3048.5],[37.533264,126.996001,3051.0],[37.533267,126.996006,3058.4],[37.533273,126.99601,3065.8],[37.533274,126.996019,3073.2],[37.533281,126.996022,3080.6],[37.533287,126.996039,3088.2],[37.5333,126.996071,3095.6],[37.533308,126.996106,3104.5],[37.533314,126.996142,3108.9],[37.533327,126.996183,3114.8],[37.533335,126.996218,3119.3],[37.533338,126.996258,3123.7],[37.533339,126.996283,3132.6],[37.533341,126.996319,3137.0],[37.533342,126.996349,3145.9],[37.533349,126.996392,3153.3],[37.533347,126.996426,3160.7],[37.53334,126.996471,3165.2],[37.53334,126.996508,3168.1],[37.533339,126.996543,3169.6],[37.533337,126.996578,3172.6],[37.533334,126.996601,3180.0],[37.533325,126.99667,3181.5],[37.533311,126.996783,3182.9],[37.533304,126.996838,3184.4],[37.533299,126.996877,3187.4],[37.533292,126.996923,3193.3],[37.533273,126.996969,3196.3],[37.533263,126.997016,3202.2],[37.533254,126.997052,3205.2],[37.533243,126.997103,3209.6],[37.533239,126.997137,3211.1],[37.533231,126.997194,3212.6],[37.533223,126.997261,3214.0],[37.533222,126.997264,3221.4],[37.533217,126.997272,3228.8],[37.533215,126.99731,3234.8],[37.53322,126.997352,3237.9],[37.533222,126.997396,3240.8],[37.533222,126.997442,3245.3],[37.533223,126.997452,3254.2],[37.533222,126.997452,3263.1],[37.533237,126.99747,3271.9],[37.533241,126.997497,3280.8],[37.533229,126.997491,3289.7],[37.53322,126.997531,3297.1],[37.533211,126.997568,3301.6],[37.533203,126.997602,3307.3],[37.533194,126.997636,3313.6],[37.53319,126.997667,3319.9],[37.533186,126.997691,3326.2],[37.533183,126.997707,3332.5],[37.533178,126.997746,3336.3],[37.533173,126.997785,3342.6],[37.533173,126.997785,3348.9],[37.533177,126.997764,3355.2],[37.533163,126.99774,3361.5],[37.533151,126.997702,3366.6],[37.533143,126.997715,3373.0],[37.533115,126.997699,3376.8],[37.533104,126.997736,3384.4],[37.533112,126.997698,3389.4],[37.533126,126.997702,3397.0],[37.533132,126.997702,3404.5],[37.533137,126.997695,3412.1],[37.533139,126.997674,3419.7],[37.533054,126.997697,3427.2],[37.533046,126.997734,3473.5],[37.533041,126.997772,3496.6],[37.533018,126.997803,3554.5],[37.532988,126.997822,3577.7],[37.532958,126.997838,3602.0],[37.532923,126.997854,3625.2],[37.532902,126.997875,3694.7],[37.532872,126.9979,3729.4],[37.532833,126.997933,3743.0],[37.532818,126.997943,3754.7],[37.532795,126.997963,3760.6],[37.532771,126.997984,3764.5],[37.532767,126.99799,3776.3],[37.532772,126.997989,3788.0],[37.532773,126.997992,3799.8],[37.532774,126.997995,3811.5],[37.532778,126.997996,3821.3],[37.532784,126.997993,3831.1],[37.532784,126.997993,3840.9],[37.532774,126.998002,3850.7],[37.53276,126.998023,3860.5],[37.532748,126.99804,3870.3],[37.532728,126.998075,3878.1],[37.532722,126.998088,3887.9],[37.532723,126.998096,3897.7],[37.532724,126.998098,3907.5],[37.532724,126.99811,3917.5],[37.532727,126.998119,3929.2],[37.532728,126.998121,3941.0],[37.532727,126.998136,3952.7],[37.532707,126.99817,3962.5],[37.532686,126.998213,3966.4],[37.53269,126.998222,3978.2],[37.532711,126.998192,3986.0],[37.532721,126.998191,3997.8],[37.532722,126.998191,4009.5],[37.532722,126.998191,4019.3],[37.532722,126.998191,4029.1],[37.532722,126.998191,4038.9],[37.532724,126.998187,4048.7],[37.532728,126.998176,4058.5],[37.53273,126.998175,4068.3],[37.53273,126.998174,4078.0],[37.53273,126.998174,4087.8],[37.532732,126.998174,4097.6],[37.532734,126.998172,4107.4],[37.532736,126.998171,4117.4],[37.532736,126.998171,4129.2],[37.532736,126.998171,4140.9],[37.532736,126.998171,4152.7],[37.532736,126.998171,4164.4],[37.532736,126.998171,4176.2]],"dur":4184.0}};
+const C1=DATA.route.slice(0,DATA.split+1);
+const C2=DATA.route.slice(DATA.split);
+
+const VERSIONS=[
+  {id:"v1",chip:"1 낮",name:"1 · 낮의 소리",desc:"11월 26일(목) 13시 점심 녹음",audio:"audio/v1_lunch.m4a",data:"lunch",mb:68.0},
+  {id:"v2",chip:"2 밤",name:"2 · 밤의 소리",desc:"11월 26일(목) 19시 30분 저녁 녹음",audio:"audio/v2_evening.m4a",data:"evening",mb:50.1},
+  {id:"v3",chip:"3 겹침",name:"3 · 겹친 시간",desc:"같은 자리의 낮과 밤이 겹친 채, 한쪽이 밀물처럼 떠올랐다 가라앉습니다",audio:"audio/v3_ghost_overlap.m4a",data:"evening",mb:50.1},
+  {id:"v4",chip:"4 뒤섞임",name:"4 · 뒤섞인 장소",desc:"겹친 시간 위로, 400m 넘게 떨어진 다른 장소의 소리가 스며들었다 사라집니다",audio:"audio/v4_ghost_shuffle.m4a",data:"evening",mb:50.1}];
+const vById=id=>VERSIONS.find(v=>v.id===id)||VERSIONS[1];
+const STOPS=DATA.stops.map(s=>Object.assign({},s));
+const BETWEEN={
+  "p1>p2":"이태원로19길·15길을 따라 내려와 세계음식거리를 지나, 해밀톤호텔 옆 골목으로 내려갑니다.",
+  "p2>p3":"이태원로를 건너 이태원역 쪽으로 걸은 뒤 우사단로로 들어서, 후커힐(우사단로14길)로 오릅니다.",
+  "p3>p4":"트랜스젠더 업소 간판이 있는 골목으로 우회전, 다시 우회전해 게이힐(우사단로12길)로 내려온 뒤 우사단로에서 좌회전, 우사단로10길로 성원 입구까지 갑니다.",
+  "p4>p5":"성원 입구에서 동남쪽 보광동 방향으로 100m쯤, 재개발 현장 펜스 앞까지 갑니다. 펜스 안으로는 들어가지 않습니다."};
+const SHORT={p1:"부군당",p2:"10.29 골목",p3:"후커힐·게이힐",p4:"서울중앙성원",p5:"재개발 현장"};
+
+/* ---------- segments: stops and the walks between them ---------- */
+const SEGS=[];
+STOPS.forEach((s,i)=>{
+  SEGS.push({key:s.id,kind:"stop",i,stop:s,title:s.name,sub:s.sub});
+  const n=STOPS[i+1];
+  if(n)SEGS.push({key:s.id+">"+n.id,kind:"walk",i,from:s,to:n,title:"걷기 · "+SHORT[s.id]+" → "+SHORT[n.id],sub:BETWEEN[s.id+">"+n.id]||""});
+});
+const segByKey=k=>SEGS.find(g=>g.key===k)||null;
+function segRange(seg,vid){
+  const T=DATA[vById(vid).data].times;
+  return seg.kind==="stop"?[T[seg.stop.id][0],T[seg.stop.id][1]]:[T[seg.from.id][1],T[seg.to.id][0]];
+}
+
+/* ---------- settings ---------- */
+const KEY="itaewon-sonicwalk-v5";
+const DEFAULT={v:5,segV:Object.fromEntries(SEGS.map(g=>[g.key,"v2"])),mode:"route",radius:25,ordered:true};
+const clone=o=>JSON.parse(JSON.stringify(o));
+let cfg=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o&&o.v===5&&o.segV){SEGS.forEach(g=>{if(!VERSIONS.some(v=>v.id===o.segV[g.key]))o.segV[g.key]="v2";});return Object.assign(clone(DEFAULT),o);}}}catch(e){}return clone(DEFAULT);}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
+const segV=k=>vById(cfg.segV[k]);
+
+/* ---------- helpers ---------- */
+function fmt(t){if(t==null||isNaN(t))return "–";t=Math.max(0,Math.round(t));const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0");}
+function hav(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r;const h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function fmtD(m){return m>=1000?(m/1000).toFixed(2)+" km":Math.round(m)+" m";}
+function fmtMin(sec){return Math.max(1,Math.round(sec/60))+"분";}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+/* ---------- polylines with progress ---------- */
+function makeLine(pts){const cum=[0];for(let i=1;i<pts.length;i++)cum[i]=cum[i-1]+hav(pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1]);return {pts,cum,len:cum[cum.length-1]||0};}
+function nearestOn(line,lat,lon,lo,hi,pref){
+  const kx=111320*Math.cos(lat*Math.PI/180),ky=110540;let best=null;
+  for(let i=0;i<line.pts.length-1;i++){
+    const s0=line.cum[i],s1=line.cum[i+1];if(s1<lo||s0>hi)continue;
+    const a=line.pts[i],b=line.pts[i+1];
+    const ax=(a[1]-lon)*kx,ay=(a[0]-lat)*ky,bx=(b[1]-lon)*kx,by=(b[0]-lat)*ky;
+    const dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy;let u=L2>0?-(ax*dx+ay*dy)/L2:0;u=Math.max(0,Math.min(1,u));
+    const d=Math.hypot(ax+u*dx,ay+u*dy);
+    const sp=s0+u*(s1-s0),sc=d+(pref==null?.02*sp:Math.max(0,pref-sp)*.6+Math.max(0,sp-pref)*.02);
+    if(!best||sc<best.sc){best={d,sc,s:sp,i,u};}
+  }
+  if(best&&line.pts[best.i].length>2){const p=line.pts[best.i],q=line.pts[best.i+1];best.t=p[2]+best.u*(q[2]-p[2]);}
+  return best;
+}
+function pointAt(line,s){s=Math.max(0,Math.min(line.len,s));let i=0;while(i<line.cum.length-2&&line.cum[i+1]<s)i++;const L=line.cum[i+1]-line.cum[i]||1,u=(s-line.cum[i])/L,a=line.pts[i],b=line.pts[i+1];return [a[0]+u*(b[0]-a[0]),a[1]+u*(b[1]-a[1])];}
+const ROUTE=makeLine(C1.concat(C2.slice(1)));
+const C1LEN=makeLine(C1).len, C2LEN=makeLine(C2).len;
+const TRACKS={lunch:makeLine(DATA.lunch.track),evening:makeLine(DATA.evening.track)};
+const TPROG={lunch:{s:null,on:false,t:null},evening:{s:null,on:false,t:null}};
+(function stopD(){let lo=0;STOPS.forEach(s=>{const b=nearestOn(ROUTE,s.lat,s.lon,lo,Infinity);s._d=b?b.s:null;if(b)lo=b.s;});})();
+const prog={s:null,on:false};
+function follow(line,st,lat,lon,force){
+  if(force!=null){st.s=force;st.on=true;const b=nearestOn(line,lat,lon,force-5,force+5);st.t=b&&b.t!=null?b.t:null;return;}
+  let b=null;
+  if(st.s!=null)b=nearestOn(line,lat,lon,st.s-40,st.s+250,st.s);
+  if(!b||b.d>OFFROUTE){const g=nearestOn(line,lat,lon,-Infinity,Infinity);if(g&&g.d<=(st.s==null?OFFROUTE:25))b=g;}
+  if(b&&b.d<=OFFROUTE){st.s=b.s;st.on=true;st.t=b.t!=null?b.t:null;}else st.on=false;
+}
+/* recording time (in a data set's file) for the current position */
+function targetTime(dk){
+  const tp=TPROG[dk];if(tp.on&&tp.t!=null)return tp.t;
+  if(!prog.on)return null;
+  const T=DATA[dk].times,R=cfg.radius,A=[[0,0]];
+  STOPS.forEach(s=>{if(s._d!=null){A.push([Math.max(0,s._d-R),T[s.id][0]]);A.push([s._d+R,T[s.id][1]]);}});
+  A.sort((a,b)=>a[0]-b[0]);const s=prog.s;
+  for(let i=0;i<A.length-1;i++){const a=A[i],b=A[i+1];if(s>=a[0]&&s<=b[0]){const u=(b[0]-a[0])?(s-a[0])/(b[0]-a[0]):0;return a[1]+u*(b[1]-a[1]);}}
+  return null;
+}
+
+/* ---------- map ---------- */
+let map=null,layer={},meMarker=null,accCircle=null,tilesFailed=false;
+const LOC_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>';
+let centerOn=null;
+function addLocate(m){
+  const C=L.Control.extend({options:{position:"topleft"},onAdd(){
+    const b=L.DomUtil.create("button","locbtn");b.type="button";b.title="내 위치 보기";b.setAttribute("aria-label","내 위치 보기");b.innerHTML=LOC_SVG;
+    L.DomEvent.disableClickPropagation(b);L.DomEvent.on(b,"click",e=>{L.DomEvent.stop(e);locateMe(m,b);});return b;}});
+  new C().addTo(m);
+}
+function locMsg(t){$("mapNote").textContent=t;const n=$("segMapNote");if(n)n.textContent=t;}
+function locateMe(m,btn){
+  if(pos&&(simOn()||(gpsState==="ok"&&performance.now()-lastFix<15000))){m.setView([pos.lat,pos.lon],Math.max(m.getZoom(),17));return;}
+  if(gpsState==="fail"&&!simOn()){gpsState="idle";$("simMode").checked=false;}
+  if(simOn()){locMsg("실내 시험 중이라 지도를 눌러 내 위치를 옮깁니다. 설정에서 '실내 시험'을 끄면 GPS를 씁니다.");return;}
+  centerOn={m,btn};btn.classList.add("busy");locMsg("내 위치를 찾는 중입니다…");
+  if(watchId===null)startGPS();else pollFix();
+}
+function centerAfterFix(){
+  if(!centerOn||!pos)return;const {m,btn}=centerOn;centerOn=null;btn.classList.remove("busy");
+  m.setView([pos.lat,pos.lon],Math.max(m.getZoom(),17));
+  locMsg(prog.on?"지도 가운데가 지금 내 위치입니다.":"지도 가운데가 지금 내 위치입니다. 걷기 경로에서 "+fmtD(nearestOn(ROUTE,pos.lat,pos.lon,-Infinity,Infinity).d)+" 떨어져 있습니다.");
+}
+function initMap(){
+  if(map)return;
+  if(!window.L){$("mapNote").textContent="지도 도구를 불러오지 못했습니다. 지점 목록으로 진행할 수 있습니다.";return;}
+  map=L.map("map",{zoomControl:true,attributionControl:true}).setView([37.5345,126.9935],17);
+  const tl=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,crossOrigin:true,attribution:"© OpenStreetMap"}).addTo(map);
+  tl.on("tileerror",()=>{if(!tilesFailed){tilesFailed=true;$("mapNote").textContent=(navigator.onLine===false?"인터넷이 없어 바탕 지도 일부가 비어 있습니다. 경로·지점·내 위치는 그대로 보입니다.":"이 화면에서는 바탕 지도가 표시되지 않아 경로와 지점만 보입니다.")+" 경로와 지점은 11월 26일 저녁 사전답사 때 실제로 걸은 GPS 기록입니다.";}});
+  map.on("click",e=>{if(simOn()){stopSim();setPos(e.latlng.lat,e.latlng.lng,5,"sim");}});
+  addLocate(map);
+  draw();fitAll();
+  if(pos)placeMe();
+}
+/* segment-tab map: whole route, the chosen segment highlighted */
+let smap=null,sLayer={},sMe=null,selKey=null;
+function initSegMap(){
+  if(!window.L)return;
+  smap=L.map("segMap",{zoomControl:false,attributionControl:true,scrollWheelZoom:false}).setView([37.5345,126.9935],16);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,crossOrigin:true,attribution:"© OpenStreetMap"}).addTo(smap);
+  addLocate(smap);drawSeg();smap.fitBounds(L.latLngBounds(ROUTE.pts).pad(.08));
+}
+function sliceRoute(a,b){const out=[pointAt(ROUTE,a)];for(let i=0;i<ROUTE.pts.length;i++){if(ROUTE.cum[i]>a&&ROUTE.cum[i]<b)out.push(ROUTE.pts[i]);}out.push(pointAt(ROUTE,b));return out;}
+function drawSeg(){
+  if(!smap)return;
+  Object.values(sLayer).forEach(l=>smap.removeLayer(l));sLayer={};
+  sLayer.c1=L.polyline(C1,{color:css("--route1"),weight:3,opacity:.55,interactive:false}).addTo(smap);
+  sLayer.c2=L.polyline(C2,{color:css("--route2"),weight:3,opacity:.55,interactive:false}).addTo(smap);
+  const seg=selKey&&segByKey(selKey),hl=css("--live");
+  if(seg&&seg.kind==="walk"&&seg.from._d!=null&&seg.to._d!=null)sLayer.hl=L.polyline(sliceRoute(seg.from._d,seg.to._d),{color:hl,weight:7,opacity:.9,interactive:false}).addTo(smap);
+  if(seg&&seg.kind==="stop")sLayer.hl=L.circle([seg.stop.lat,seg.stop.lon],{radius:cfg.radius*1.3,color:hl,weight:3,fillColor:hl,fillOpacity:.25,interactive:false}).addTo(smap);
+  STOPS.forEach(s=>{const on=seg&&(seg.key===s.id||(seg.kind==="walk"&&(seg.from===s||seg.to===s)));
+    const m=L.circleMarker([s.lat,s.lon],{radius:on?7:5,color:on?hl:css("--zone"),weight:2,fillColor:css("--surface"),fillOpacity:1}).addTo(smap);
+    m.bindTooltip(s.n,{permanent:true,direction:"top"});m.on("click",()=>segHighlight(s.id,true));sLayer["m"+s.id]=m;});
+  if(pos){sMe=L.circleMarker([pos.lat,pos.lon],{radius:6,color:css("--surface"),weight:2,fillColor:css("--me"),fillOpacity:1,interactive:false}).addTo(smap);sLayer.me=sMe;}
+}
+function segHighlight(key,scroll){
+  selKey=key;
+  document.querySelectorAll("#segList .segrow").forEach(r=>r.classList.toggle("sel",r.id==="sg-"+key));
+  if(scroll){const r=document.getElementById("sg-"+key);if(r)r.scrollIntoView({block:"center",behavior:"smooth"});}
+  if(!smap)return;drawSeg();
+  const seg=segByKey(key);if(!seg)return;
+  if(seg.kind==="stop")smap.flyTo([seg.stop.lat,seg.stop.lon],18,{duration:.6});
+  else if(seg.from._d!=null&&seg.to._d!=null)smap.flyToBounds(L.latLngBounds(sliceRoute(seg.from._d,seg.to._d)).pad(.2),{duration:.6,maxZoom:18});
+}
+function fitAll(){if(!map)return;map.fitBounds(L.latLngBounds(ROUTE.pts).pad(.12));}
+function draw(){
+  if(!map)return;
+  Object.values(layer).forEach(l=>map.removeLayer(l));layer={};
+  const zone=css("--zone");
+  layer.c1=L.polyline(C1,{color:css("--route1"),weight:4,opacity:.85,interactive:false}).addTo(map);
+  layer.c2=L.polyline(C2,{color:css("--route2"),weight:4,opacity:.85,interactive:false}).addTo(map);
+  STOPS.forEach(s=>{
+    const isCur=s.id===curId;
+    layer["z"+s.id]=L.circle([s.lat,s.lon],{radius:cfg.radius,color:zone,weight:isCur?2.5:1.5,fillColor:zone,fillOpacity:isCur?.28:.10}).addTo(map);
+    const m=L.circleMarker([s.lat,s.lon],{radius:6,color:zone,weight:2,fillColor:css("--surface"),fillOpacity:1}).addTo(map);
+    m.bindTooltip(s.n,{permanent:true,direction:"top"});
+    m.on("click",ev=>{L.DomEvent.stopPropagation(ev);pickStop(s.id);});
+    layer["m"+s.id]=m;
+  });
+}
+
+/* ---------- audio: two decks so every jump and loop is a crossfade ---------- */
+let ctx=null,master=null,noiseBuf=null,synth=null,synthKey=null;
+const decks=[0,1].map(()=>{const el=document.createElement("audio");el.preload="auto";el.setAttribute("playsinline","");el.hidden=true;document.body.appendChild(el);return {el,gain:null,url:null,lvl:0};});
+let cur=null,gen=0,pendingPlay=false;
+const badUrls=new Set();
+const active=()=>cur==null?null:decks[cur];
+function ensureAudio(){
+  if(ctx)return;
+  const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();
+  master=ctx.createGain();master.connect(ctx.destination);
+  decks.forEach(d=>{try{d.gain=ctx.createGain();d.gain.gain.value=0;d.gain.connect(master);ctx.createMediaElementSource(d.el).connect(d.gain);}catch(e){d.gain=null;}});
+  const len=ctx.sampleRate*3;noiseBuf=ctx.createBuffer(1,len,ctx.sampleRate);const n=noiseBuf.getChannelData(0);let last=0;
+  for(let i=0;i<len;i++){const w=Math.random()*2-1;last=(last+.02*w)/1.02;n[i]=last*3.2;}
+}
+/* iOS lets an element play later only if it was started once inside a tap */
+function unlockDecks(url){decks.forEach(d=>{try{if(!d.url){d.url=url;d.el.src=url;}const p=d.el.play();if(p&&p.then)p.then(()=>{if(active()!==d)d.el.pause();},()=>{});}catch(e){}});}
+function setGain(d,to,tc){d.lvl=to;if(d.gain&&ctx){const g=d.gain.gain,t=ctx.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(to,t,Math.max(.01,tc));}else{try{d.el.volume=to;}catch(e){}}}
+function loadSrc(d,url){
+  if(d.url!==url||d.el.error){d.url=url;d.el.src=url;try{d.el.load();}catch(e){}}
+  if(d.el.readyState>=1)return Promise.resolve();
+  return new Promise((ok,no)=>{let t=null;const cl=()=>{clearTimeout(t);d.el.removeEventListener("loadedmetadata",y);d.el.removeEventListener("error",n);};
+    const y=()=>{cl();ok();},n=()=>{cl();no(new Error("load"));};
+    d.el.addEventListener("loadedmetadata",y);d.el.addEventListener("error",n);t=setTimeout(()=>{cl();no(new Error("timeout"));},20000);});
+}
+/* crossfade to url at time t (seconds in that file) */
+async function playAt(url,t,fade){
+  if(holdReason())return;
+  fade=fade||XF;
+  const old=active();
+  if(old&&old.url===url&&!old.el.paused&&Math.abs(old.el.currentTime-t)<1.5){setGain(old,1,.3);return;}
+  const g=++gen,ni=cur==null?0:1-cur,d=decks[ni];
+  pendingPlay=true;
+  try{await loadSrc(d,url);}catch(e){if(g===gen){pendingPlay=false;loadFailed(url);}return;}
+  if(g!==gen||holdReason()){if(g===gen)pendingPlay=false;return;}
+  try{d.el.currentTime=Math.max(0,t);}catch(e){}
+  d.el.playbackRate=1;setGain(d,0,.01);
+  const p=d.el.play();if(p&&p.catch)p.catch(()=>{});
+  setGain(d,1,fade/3);
+  if(old&&old!==d){setGain(old,0,fade/3);setTimeout(()=>{if(active()!==old)old.el.pause();},fade*1000+900);}
+  cur=ni;pendingPlay=false;badUrls.delete(url);stopSynth();
+}
+function fadeAll(tc){gen++;pendingPlay=false;const g=gen;decks.forEach(d=>setGain(d,0,tc||.4));setTimeout(()=>{if(g===gen)decks.forEach(d=>d.el.pause());},(tc||.4)*4000);stopSynth();}
+function hardStop(){gen++;pendingPlay=false;decks.forEach(d=>{setGain(d,0,.01);try{d.el.pause();}catch(e){}});stopSynth();}
+function loadFailed(url){
+  badUrls.add(url);const v=VERSIONS.find(x=>x.audio===url);
+  const m=HOSTED&&v&&!offSaved.has(v.id)?"'"+v.name+"' 녹음은 아직 이 휴대폰에 저장되지 않아 임시 소리로 냅니다. 위 '오프라인 저장'에서 수업 비밀번호를 넣고 저장하면 들립니다.":(v?"'"+v.name+"'":"녹음")+" 파일을 불러오지 못해 임시 소리로 냅니다.";
+  $("cfgMsg").textContent=m;lastLoadMsg=m;render();
+}
+let lastLoadMsg="";
+window.addEventListener("online",()=>{badUrls.clear();walk.key=null;});
+const VOICE=[{f:520,tone:196},{f:300,tone:147},{f:900,tone:247},{f:650,tone:175},{f:420,tone:220}];
+function setSynth(key){
+  if(key===synthKey)return;
+  stopSynth();synthKey=key;if(key==null||!ctx)return;
+  const isWalk=key==="walk",v=isWalk?{f:260,tone:0}:VOICE[(+key)%VOICE.length],idx=isWalk?0:+key;
+  const out=ctx.createGain();out.gain.value=0;out.connect(master);
+  const n=ctx.createBufferSource();n.buffer=noiseBuf;n.loop=true;
+  const bp=ctx.createBiquadFilter();bp.type=isWalk?"lowpass":"bandpass";bp.frequency.value=v.f;bp.Q.value=.8;
+  const ng=ctx.createGain();ng.gain.value=isWalk?.35:.5;n.connect(bp).connect(ng).connect(out);
+  const nodes=[n];
+  if(!isWalk){const o=ctx.createOscillator();o.frequency.value=v.tone;const og=ctx.createGain();og.gain.value=.05;
+    const lfo=ctx.createOscillator();lfo.frequency.value=.2+idx*.07;const lg=ctx.createGain();lg.gain.value=.04;
+    lfo.connect(lg).connect(og.gain);o.connect(og).connect(out);o.start();lfo.start();nodes.push(o,lfo);}
+  n.start();out.gain.setTargetAtTime(isWalk?.35:.6,ctx.currentTime,.5);
+  synth={out,nodes};
+}
+function stopSynth(){
+  synthKey=null;if(!synth)return;const s=synth;synth=null;
+  s.out.gain.setTargetAtTime(0,ctx.currentTime,.4);
+  setTimeout(()=>{s.nodes.forEach(x=>{try{x.stop();}catch(e){}});s.out.disconnect();},1800);
+}
+
+/* ---------- walking: stops, zones, current segment ---------- */
+let started=false,paused=false,tab="seg";
+let curId=null,lastIdx=-1,override=false;
+const walk={key:null,v:null,range:null,loops:0,linger:null,synth:false};
+const stopById=id=>STOPS.find(s=>s.id===id)||null;
+const idxOf=id=>STOPS.findIndex(s=>s.id===id);
+function inZone(s,R){
+  const geo=pos?hav(pos.lat,pos.lon,s.lat,s.lon):Infinity;
+  if(cfg.mode==="route"&&prog.on&&s._d!=null)return Math.abs(prog.s-s._d)<=R&&geo<=R*1.8;
+  return geo<=R;
+}
+function decide(){
+  if(!pos)return;
+  const R=cfg.radius;
+  if(curId){const s=stopById(curId);if(s&&inZone(s,R*1.4))return;leave();}
+  let best=null,bd=1e9;
+  STOPS.forEach((s,i)=>{
+    if(cfg.ordered&&!(i===lastIdx||i===lastIdx+1))return;
+    if(inZone(s,R)){const d=hav(pos.lat,pos.lon,s.lat,s.lon);if(d<bd){bd=d;best=s;}}
+  });
+  if(best)enter(best.id);
+}
+function enter(id){if(id===curId)return;curId=id;const i=idxOf(id);if(i>lastIdx)lastIdx=i;draw();render();}
+function leave(silent){if(curId===null)return;curId=null;if(!silent){draw();render();}}
+function segNow(){
+  if(curId)return segByKey(curId);
+  if(!prog.on)return null;
+  const s=prog.s;
+  if(STOPS[0]._d!=null&&s<STOPS[0]._d)return segByKey(STOPS[0].id);
+  for(let i=0;i<STOPS.length-1;i++){const a=STOPS[i]._d,b=STOPS[i+1]._d;if(a!=null&&b!=null&&s>=a&&s<b)return segByKey(STOPS[i].id+">"+STOPS[i+1].id);}
+  return segByKey(STOPS[STOPS.length-1].id);
+}
+
+/* ---------- hold: screen off / relocating / GPS lost ---------- */
+let asleep=false,locating=false,gpsLost=false,held=false,resumeWall=0,resumeT=0,hadFix=false;
+function holdReason(){
+  if(tab!=="walk"||!started)return null;
+  if(asleep)return "asleep";
+  if(simOn())return null;
+  if(locating)return "locating";
+  if(gpsLost)return "lost";
+  return null;
+}
+
+/* ---------- engine tick ---------- */
+function tick(){
+  if(tab==="seg"){segTick();return;}
+  if(!started||paused||!ctx)return;
+  if(!simOn()&&hadFix&&!asleep){const age=performance.now()-lastFix;
+    if(age>6000)pollFix();
+    if(!locating&&!gpsLost&&!curId&&age>GPS_GAP)gpsLost=true;}   /* at a stop, silence usually means standing still */
+  if(!simOn()&&locating)pollFix();
+  if(holdReason()){if(!held){held=true;fadeAll(.4);}return;}
+  if(held){held=false;walk.key=null;walk.resume=true;}
+  if(pendingPlay)return;
+  const seg=segNow();
+  if(!seg||(seg.kind==="walk"&&cfg.mode!=="route")||(seg.kind==="stop"&&!curId&&cfg.mode!=="route")){if(walk.key){walk.key=null;fadeAll(.6);}return;}
+  const v=segV(seg.key),url=v.audio,[a,b]=segRange(seg,v.id);
+  /* no file: placeholder sound */
+  if(badUrls.has(url)){walk.key=seg.key;walk.v=v.id;walk.synth=true;setSynth(seg.kind==="stop"?String(seg.i):"walk");return;}
+  walk.synth=false;
+  const d=active(),el=d&&d.url===url?d.el:null;
+  if(seg.kind==="stop"&&curId){
+    if(walk.key!==seg.key||walk.v!==v.id){
+      let t=a;
+      if(walk.key===seg.key&&walk.range&&d){const u=clamp((d.el.currentTime-walk.range[0])/Math.max(1,walk.range[1]-walk.range[0]),0,1);t=a+u*(b-a);}  /* version changed in place */
+      else if(walk.resume&&el&&el.currentTime>=a&&el.currentTime<b-XF)t=el.currentTime;                                              /* back from screen-off at the same stop */
+      walk.key=seg.key;walk.v=v.id;walk.range=[a,b];walk.loops=0;walk.linger=null;walk.resume=false;playAt(url,t,XF);return;
+    }
+    if(el&&!el.paused&&el.currentTime>=b-XF){walk.loops++;playAt(url,a,XF);return;}          /* stay as long as people stay: loop with crossfade */
+    if(!el||el.paused)playAt(url,el?clamp(el.currentTime,a,b-XF):a,XF);
+    if(el)el.playbackRate=1;
+    return;
+  }
+  const T=targetTime(v.data);
+  if(T==null){if(walk.key){walk.key=null;fadeAll(.6);}return;}
+  if(walk.key!==seg.key||walk.v!==v.id||!el||el.paused){walk.key=seg.key;walk.v=v.id;walk.range=[a,b];walk.linger=null;walk.resume=false;playAt(url,T,XF);return;}
+  const c=el.currentTime,diff=T-c;
+  if(walk.linger!=null){
+    if(T>walk.linger+15)walk.linger=null;                                              /* walking again */
+    else{el.playbackRate=1;if(c>walk.linger+LINGER){walk.loops++;playAt(url,Math.max(0,walk.linger-LINGER),XF);}return;}
+  }
+  if(diff>25){playAt(url,T,XF);return;}
+  if(diff<-LINGER){walk.linger=T;walk.loops=0;playAt(url,Math.max(0,T-LINGER),XF);return;}   /* standing still: loop this spot */
+  el.playbackRate=clamp(1+diff/40,.85,1.15);
+}
+setInterval(()=>{tick();if(tab==="walk"&&started){renderNow();overlay();}},400);
+function overlay(){
+  if(!started||paused||tab!=="walk")return;let m=null;
+  if(needTap)m="화면을 다시 켰습니다. 아무 곳이나 한 번 누르면 소리가 이어집니다.";
+  else if(locating)m=performance.now()-resumeT>30000?"위치를 아직 찾지 못했습니다. 하늘이 트인 곳에서 잠시 기다리면 그 자리의 소리부터 이어집니다.":"화면을 다시 켰습니다. 지금 위치를 확인하는 중이며, 잡히면 그 자리의 소리부터 이어집니다.";
+  else if(gpsLost)m="위치 신호가 20초 넘게 끊겨 소리를 잠시 멈췄습니다. 위치가 다시 잡히면 그 자리부터 이어집니다.";
+  else if(!simOn()&&pos&&!prog.on&&cfg.mode==="route"&&!curId)m="경로에서 40m 넘게 벗어나 있어 소리를 멈췄습니다. 경로로 돌아오면 그 자리의 소리부터 이어집니다.";
+  if(m){$("nowState").textContent=m;$("pkNow").textContent=m;$("now").classList.remove("live");}
+  if(locating||gpsLost){$("chipLoc").textContent="위치 확인 중";$("chipLoc").className="chip warn";}
+}
+
+/* ---------- position ---------- */
+let pos=null,watchId=null,gpsState="idle",lastFix=0,needTap=false;
+function simOn(){return $("simMode").checked;}
+function setPos(lat,lon,acc,src,forceS){
+  pos={lat,lon,acc,src};
+  follow(ROUTE,prog,lat,lon,forceS);
+  follow(TRACKS.lunch,TPROG.lunch,lat,lon,null);follow(TRACKS.evening,TPROG.evening,lat,lon,null);
+  placeMe();centerAfterFix();
+  if(!override)decide();
+  render();
+}
+function placeMe(){
+  if(!pos)return;const {lat,lon,acc}=pos;
+  if(map){
+    const me=css("--me");
+    if(!meMarker){meMarker=L.circleMarker([lat,lon],{radius:7,color:css("--surface"),weight:2,fillColor:me,fillOpacity:1}).addTo(map);
+      accCircle=L.circle([lat,lon],{radius:acc,color:me,weight:1,fillColor:me,fillOpacity:.08,interactive:false}).addTo(map);}
+    else{meMarker.setLatLng([lat,lon]);accCircle.setLatLng([lat,lon]).setRadius(acc);}
+  }
+  if(smap){if(sMe)sMe.setLatLng([lat,lon]);else drawSeg();}
+}
+function startGPS(){
+  if(watchId!==null)return;
+  if(!("geolocation" in navigator)){gpsFail("이 브라우저는 위치를 지원하지 않습니다");return;}
+  gpsState="waiting";render();
+  try{
+    watchId=navigator.geolocation.watchPosition(onFix,err=>{
+      if(err.code===1)gpsFail("이 화면에서는 위치 사용이 막혀 있습니다");
+      else if(!hadFix)gpsFail("위치를 받지 못했습니다");
+    },{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+  }catch(e){gpsFail("위치를 받지 못했습니다");}
+}
+function onFix(p){
+  gpsState="ok";if(simOn())return;
+  const acc=Math.max(3,p.coords.accuracy||10);
+  if(locating){
+    const waited=performance.now()-resumeT;
+    if(p.timestamp<resumeWall-500||acc>(waited<15000?35:60))return;   /* only a fresh, usable fix */
+    locating=false;prog.s=null;TPROG.lunch.s=null;TPROG.evening.s=null;  /* search the whole route once */
+    setPos(p.coords.latitude,p.coords.longitude,acc,"gps");catchUp();
+  }else setPos(p.coords.latitude,p.coords.longitude,acc,"gps");
+  lastFix=performance.now();hadFix=true;
+  if(gpsLost){gpsLost=false;walk.key=null;}
+}
+let polling=false;
+function pollFix(){
+  if(polling||simOn()||!("geolocation" in navigator))return;polling=true;
+  try{navigator.geolocation.getCurrentPosition(p=>{polling=false;onFix(p);},()=>{polling=false;},{enableHighAccuracy:true,maximumAge:locating?0:15000,timeout:10000});}catch(e){polling=false;}
+}
+function catchUp(){
+  if(!prog.on)return;
+  STOPS.forEach((s,i)=>{if(s._d!=null&&s._d+cfg.radius<prog.s&&i>lastIdx&&s.id!==curId)lastIdx=i;});
+  if(!override)decide();render();
+}
+function gpsFail(msg){
+  gpsState="fail";
+  if(watchId!==null){try{navigator.geolocation.clearWatch(watchId);}catch(e){}watchId=null;}
+  $("simMode").checked=true;
+  $("chipLoc").textContent="위치 없음 · 지도로 시험";$("chipLoc").className="chip warn";
+  $("nowState").textContent=msg+". 설정의 모의 걷기를 쓰거나 지도·지점 목록을 눌러 시험하세요.";
+  if(centerOn){centerOn.btn.classList.remove("busy");centerOn=null;
+    locMsg(msg+". 휴대폰 설정에서 이 앱(또는 Safari)의 위치 접근을 허용한 뒤 다시 누르세요.");}
+}
+
+/* ---------- screen on/off ---------- */
+async function keepAwake(){
+  try{if("wakeLock" in navigator){const w=await navigator.wakeLock.request("screen");$("chipWake").hidden=false;w.addEventListener("release",()=>{$("chipWake").hidden=true;});}}catch(e){$("chipWake").hidden=true;}
+}
+function goAsleep(){if(!started||asleep||tab!=="walk")return;asleep=true;held=true;hardStop();}
+document.addEventListener("pagehide",goAsleep);
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){goAsleep();return;}
+  if(asleep){asleep=false;
+    if(!simOn()){locating=true;gpsLost=false;resumeWall=Date.now();resumeT=performance.now();prog.on=false;TPROG.lunch.on=false;TPROG.evening.on=false;}}
+  if(!started)return;
+  keepAwake();
+  if(watchId!==null&&!simOn()){try{navigator.geolocation.clearWatch(watchId);}catch(e){}watchId=null;startGPS();}
+  if(ctx&&ctx.state!=="running"){const r=ctx.resume();if(r&&r.then)r.then(()=>{needTap=ctx.state!=="running";render();},()=>{needTap=true;render();});}
+  render();
+});
+document.addEventListener("pointerdown",()=>{if(needTap&&ctx){ctx.resume();needTap=false;walk.key=null;render();}},true);
+decks.forEach(d=>d.el.addEventListener("play",()=>{if(tab==="walk"&&(document.visibilityState==="hidden"||asleep)){try{d.el.pause();}catch(e){}}}));
+if("mediaSession" in navigator){
+  try{navigator.mediaSession.metadata=new MediaMetadata({title:"이태원 소닉워크",artist:"화면을 켜면 그 자리의 소리가 이어집니다"});}catch(e){}
+  ["play","seekbackward","seekforward","seekto","previoustrack","nexttrack"].forEach(a=>{try{navigator.mediaSession.setActionHandler(a,()=>{});}catch(e){}});
+  ["pause","stop"].forEach(a=>{try{navigator.mediaSession.setActionHandler(a,()=>{if(tab==="seg"){segStop();return;}if(started&&!paused)$("btnPause").click();});}catch(e){}});
+}
+
+/* ---------- simulated walk ---------- */
+let simTimer=null,simS=0,waitUntil=0,waited=new Set();
+function startSim(){
+  $("simMode").checked=true;override=false;$("btnAuto").hidden=true;
+  simS=prog.on&&prog.s!=null?prog.s:0;waited=new Set(STOPS.filter(s=>s._d!=null&&s._d<simS-1).map(s=>s.id));
+  waitUntil=0;simTimer=setInterval(simStep,250);$("btnSim").textContent="모의 걷기 멈춤";simStep();
+}
+function stopSim(){if(simTimer){clearInterval(simTimer);simTimer=null;}$("btnSim").textContent="모의 걷기";}
+function simStep(){
+  const now=performance.now();if(now<waitUntil)return;
+  const mult=+$("simSpeed").value,prev=simS;simS+=PACE*.25*mult;
+  for(const s of STOPS){if(s._d!=null&&prev<s._d&&simS>=s._d&&!waited.has(s.id)){waited.add(s.id);simS=s._d;const r=segRange(segByKey(s.id),cfg.segV[s.id]);waitUntil=now+Math.max(3,(r[1]-r[0])/mult)*1000;break;}}
+  if(simS>=ROUTE.len){simS=ROUTE.len;stopSim();}
+  const p=pointAt(ROUTE,simS);setPos(p[0],p[1],5,"sim",simS);
+}
+
+/* ---------- version chips ---------- */
+function vChips(seg,onPick){
+  const box=document.createElement("div");box.className="vchips";box.setAttribute("role","group");box.setAttribute("aria-label",seg.title+" 소리 버전");
+  VERSIONS.forEach(v=>{
+    const b=document.createElement("button");b.type="button";b.textContent=v.chip;b.title=v.name;
+    const on=cfg.segV[seg.key]===v.id;b.setAttribute("aria-pressed",on?"true":"false");if(on)b.className="on";
+    b.addEventListener("click",ev=>{ev.stopPropagation();if(cfg.segV[seg.key]===v.id)return;cfg.segV[seg.key]=v.id;save();onPick&&onPick(v.id);renderAllLists();});
+    box.appendChild(b);
+  });
+  box.addEventListener("click",ev=>ev.stopPropagation());box.addEventListener("keydown",ev=>ev.stopPropagation());
+  return box;
+}
+function renderAllLists(){renderList();renderSegList();renderVerAll();offRender();renderNow();}
+function renderVerAll(){
+  const sel=$("verAll"),vals=new Set(SEGS.map(g=>cfg.segV[g.key]));
+  sel.textContent="";
+  if(vals.size>1){const o=document.createElement("option");o.value="";o.textContent="구간마다 다름";sel.appendChild(o);}
+  VERSIONS.forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.name;sel.appendChild(o);});
+  sel.value=vals.size>1?"":[...vals][0];
+}
+$("verAll").addEventListener("change",e=>{const id=e.target.value;if(!id)return;SEGS.forEach(g=>{cfg.segV[g.key]=id;});save();renderAllLists();});
+
+/* ---------- UI: walk tab ---------- */
+function pickStop(id){
+  const s=stopById(id);if(!s)return;
+  const i=idxOf(id);
+  if(simOn()){stopSim();override=false;lastIdx=i-1;if(curId!==id)leave(true);
+    if(s._d!=null){const p=pointAt(ROUTE,s._d);setPos(p[0],p[1],5,"sim",s._d);}else setPos(s.lat,s.lon,5,"sim");return;}
+  override=true;$("btnAuto").hidden=false;lastIdx=i-1;curId=null;enter(id);
+  if(!started)$("btnStart").click();
+}
+function nextStop(){return lastIdx>=STOPS.length-1?null:STOPS[Math.min(lastIdx+1,STOPS.length-1)];}
+function photoKey(){if(curId)return curId;const n=nextStop();return n?n.id:null;}
+let shownPhotos=null;
+function renderPhotos(){
+  const k=photoKey();if(k===shownPhotos)return;shownPhotos=k;
+  const box=$("nowPhotos");box.textContent="";
+  (PHOTOS[k]||[]).forEach(p=>{
+    const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","사진 크게 보기: "+p.cap);
+    const im=document.createElement("img");im.src=p.src;im.alt=p.cap;im.loading="lazy";
+    const sp=document.createElement("span");sp.textContent=p.cap;
+    b.append(im,sp);b.addEventListener("click",()=>{$("viewerImg").src=p.src;$("viewerImg").alt=p.cap;$("viewerCap").textContent=p.cap;$("viewer").hidden=false;$("viewerClose").focus();});
+    box.appendChild(b);
+  });
+  box.hidden=!(PHOTOS[k]||[]).length;
+}
+$("viewerClose").addEventListener("click",()=>{$("viewer").hidden=true;});
+$("viewer").addEventListener("click",e=>{if(e.target===$("viewer"))$("viewer").hidden=true;});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("viewer").hidden=true;});
+
+function renderNow(){
+  const s=stopById(curId),seg=segNow(),d=active();
+  const playing=started&&!paused&&walk.key&&(walk.synth||(d&&!d.el.paused&&d.lvl>.5));
+  $("now").classList.toggle("live",!!playing);
+  const kick=s?(started?"지금 있는 지점 · 이곳의 소리를 듣는 중":"지금 있는 지점"):(lastIdx<0?"출발 지점 · 걷기를 시작하면 위치에 따라 바뀝니다":"다음 지점 · 걸으며 그 사이 길의 소리를 듣습니다");
+  $("nowKicker").textContent=override&&s?"목록에서 고른 지점 · 위치 따라가기로 돌아가려면 아래 버튼":kick;
+  if(s){$("nowBadge").textContent=s.n;$("nowName").textContent=s.name;$("nowSub").textContent=s.sub;}
+  else{
+    const n=nextStop(),prevId=lastIdx>=0?STOPS[lastIdx].id:null;
+    if(!n){$("nowBadge").textContent="✓";$("nowName").textContent="모든 지점을 지났습니다";$("nowSub").textContent="걷기를 마치고 들은 것을 적어 보세요.";}
+    else{$("nowBadge").textContent=n.n;$("nowName").textContent=n.name;$("nowSub").textContent=(prevId&&BETWEEN[prevId+">"+n.id])||n.sub;}
+  }
+  if(seg){const v=segV(seg.key);$("nowVer").textContent="지금 구간 소리: "+v.name+" — "+v.desc;}else $("nowVer").textContent="";
+  renderPhotos();
+  if(!started){if(s)$("nowState").textContent="해설 지점 안에 있습니다. 걷기 시작을 누르면 소리가 납니다.";$("pkNow").textContent=$("nowName").textContent;return;}
+  if(paused){$("nowState").textContent="소리를 멈췄습니다.";$("pkNow").textContent="소리를 멈췄습니다.";return;}
+  let msg="",bar=0;
+  const el=d?d.el:null;
+  if(walk.synth)msg=(lastLoadMsg||"녹음 파일을 불러오지 못했습니다.")+" ";
+  if(s&&walk.range&&el&&!walk.synth){
+    const [a,b]=walk.range,t=el.currentTime;bar=clamp((t-a)/Math.max(1,b-a),0,1);
+    msg+="사전답사 녹음 "+fmt(t)+" · 이 지점 구간 "+fmt(a)+"–"+fmt(b)+(walk.loops?" · 머무는 동안 겹쳐 반복 ("+(walk.loops+1)+"번째)":"");
+  }else if(!s){
+    const n=nextStop();let tail="";
+    if(n&&prog.on&&n._d!=null){const rem=Math.max(0,n._d-prog.s);tail="다음 지점까지 길 따라 "+fmtD(rem)+" · 약 "+fmtMin(rem/PACE);}
+    else if(n&&pos)tail="다음 지점까지 직선 "+fmtD(hav(pos.lat,pos.lon,n.lat,n.lon));
+    if(cfg.mode!=="route")msg+="해설 지점에서만 소리가 납니다. "+tail;
+    else if(walk.linger!=null&&el)msg+="멈춰 서 있어 이 자리의 소리를 겹쳐 이으며 반복합니다. 걸으면 다시 앞으로 나아갑니다.";
+    else if(el&&!el.paused&&!walk.synth)msg+="걸으며 듣는 중 · 사전답사 녹음 "+fmt(el.currentTime)+(tail?" · "+tail:"");
+    else msg+=tail||"걷기 시작 위치를 찾는 중입니다.";
+    if(seg&&el){const v=segV(seg.key);bar=clamp(el.currentTime/DATA[v.data].dur,0,1);}
+  }
+  $("nowBar").style.width=(bar*100)+"%";
+  $("nowState").textContent=msg||"걷기 시작 위치를 찾는 중입니다.";
+  $("pkNow").textContent=$("nowName").textContent+" · "+$("nowState").textContent;
+}
+function render(){
+  if(tab==="walk")renderNow();
+  if(pos&&!simOn()&&gpsState==="ok"){$("chipLoc").textContent="GPS ±"+Math.round(pos.acc)+" m";$("chipLoc").className="chip "+(pos.acc<=25?"ok":"warn");}
+  else if(simOn()&&gpsState!=="fail"){$("chipLoc").textContent="모의 위치";$("chipLoc").className="chip";}
+  else if(gpsState==="waiting"){$("chipLoc").textContent="위치 찾는 중";$("chipLoc").className="chip";}
+  overlay();
+  const used=new Set(SEGS.map(g=>cfg.segV[g.key])),bad=[...used].some(id=>badUrls.has(vById(id).audio));
+  $("chipSrc").textContent=bad?"일부 임시 소리":(used.size>1?"구간별 버전":vById([...used][0]).name);$("chipSrc").className="chip"+(bad?" warn":" ok");
+  renderList();
+}
+function stopItem(s,i){
+  const li=document.createElement("li");
+  if(s.id===curId)li.className="current";else if(i<=lastIdx)li.className="done";
+  const main=document.createElement("div");main.className="srow";main.tabIndex=0;main.setAttribute("role","button");
+  main.setAttribute("aria-label",s.n+"번 "+s.name+(simOn()?", 이 지점으로 이동":", 이 지점 소리 재생"));
+  const num=document.createElement("span");num.className="num";num.textContent=s.n;
+  const tx=document.createElement("span");tx.className="stxt";
+  const b=document.createElement("b");b.textContent=s.name;
+  const sp=document.createElement("span");sp.textContent=s.sub;tx.append(b,sp);
+  const d=document.createElement("span");d.className="dist";
+  if(prog.on&&s._d!=null){const r=s._d-prog.s;d.textContent=r>5?fmtD(r):(r>-5?"여기":"지남");}else if(pos)d.textContent=fmtD(hav(pos.lat,pos.lon,s.lat,s.lon));
+  main.append(num,tx,d);
+  main.addEventListener("click",()=>pickStop(s.id));
+  main.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pickStop(s.id);}});
+  li.append(main,vChips(segByKey(s.id)));
+  return li;
+}
+function walkItem(g){
+  const li=document.createElement("li");li.className="walkseg";
+  const q=document.createElement("p");q.className="between";q.textContent=g.sub;
+  li.append(q,vChips(g));return li;
+}
+let listSig="";
+function renderList(){
+  const sig=[curId,lastIdx,prog.on?Math.round(prog.s/5):"x",pos?Math.round(pos.lat*1e4)+":"+Math.round(pos.lon*1e4):"",JSON.stringify(cfg.segV),simOn()].join("|");
+  if(sig===listSig)return;listSig=sig;
+  const box=$("stopList");box.textContent="";
+  [[2,"코스 2 · 부군당에서 10.29 골목까지",C1LEN,"--route1"],[1,"코스 1 · 후커힐에서 보광동 재개발 현장까지",C2LEN,"--route2"]].forEach(([c,title,len,col])=>{
+    const h=document.createElement("h2");const sw=document.createElement("span");sw.className="swatch";sw.style.background="var("+col+")";
+    const t=document.createElement("span");t.textContent=title;const m=document.createElement("span");m.className="meta";m.textContent="· "+fmtD(len)+" · 걷는 시간 약 "+fmtMin(len/PACE);
+    h.append(sw,t,m);box.appendChild(h);
+    const ol=document.createElement("ol");ol.className="stops";
+    STOPS.forEach((s,i)=>{if(s.course===c){
+      if(i>0){const g=segByKey(STOPS[i-1].id+">"+s.id);if(g)ol.appendChild(walkItem(g));}
+      ol.appendChild(stopItem(s,i));}});
+    box.appendChild(ol);
+  });
+}
+
+/* ---------- UI: segment tab ---------- */
+const sp={key:null,v:null,range:null};
+function segPlay(seg,vid,u){
+  ensureAudio();if(ctx.state==="suspended")ctx.resume();
+  const v=vById(vid),r=segRange(seg,vid);
+  if(!sp.key)unlockDecks(v.audio);
+  sp.key=seg.key;sp.v=vid;sp.range=r;if(selKey!==seg.key)segHighlight(seg.key,false);
+  if(badUrls.has(v.audio)){setSynth(seg.kind==="stop"?String(seg.i):"walk");renderSegList();return;}
+  playAt(v.audio,r[0]+(u||0)*(r[1]-r[0]),u?XF:.6);renderSegList();
+}
+function segStop(){sp.key=null;fadeAll(.3);renderSegList();}
+function segTick(){
+  if(!sp.key)return;
+  const d=active(),seg=segByKey(sp.key);if(!seg)return;
+  const row=document.getElementById("sg-"+seg.key);
+  if(d&&!pendingPlay&&d.url===vById(sp.v).audio){
+    const [a,b]=sp.range,t=d.el.currentTime;
+    if(row){row.querySelector(".bar>i").style.width=(clamp((t-a)/(b-a),0,1)*100)+"%";row.querySelector(".stime").textContent=fmt(Math.max(0,t-a))+" / "+fmt(b-a);}
+    if(t>=b-.3){const i=SEGS.indexOf(seg),nx=SEGS[i+1];
+      if($("autoNext").checked&&nx){segPlay(nx,cfg.segV[nx.key],0);}else segStop();}
+  }
+}
+function renderSegList(){
+  const box=$("segList");box.textContent="";
+  SEGS.forEach(seg=>{
+    const vid=cfg.segV[seg.key],r=segRange(seg,vid),isOn=sp.key===seg.key;
+    const row=document.createElement("div");row.className="segrow"+(seg.kind==="walk"?" walk":"")+(isOn?" on":"")+(selKey===seg.key?" sel":"");row.id="sg-"+seg.key;
+    row.addEventListener("click",e=>{if(e.target.closest("button"))return;segHighlight(seg.key,false);});
+    const h=document.createElement("div");h.className="sh";
+    const num=document.createElement("span");num.className="num";num.textContent=seg.kind==="stop"?seg.stop.n:"→";
+    const t=document.createElement("b");t.textContent=seg.title;
+    h.append(num,t);
+    const sub=document.createElement("p");sub.className="ssub";sub.textContent=seg.sub;
+    const ctl=document.createElement("div");ctl.className="sctl";
+    const btn=document.createElement("button");btn.type="button";btn.className=isOn?"primary":"";btn.textContent=isOn?"멈춤":"듣기";
+    btn.setAttribute("aria-label",seg.title+(isOn?" 멈춤":" 듣기"));
+    btn.addEventListener("click",()=>{if(sp.key===seg.key)segStop();else segPlay(seg,cfg.segV[seg.key],0);});
+    const bar=document.createElement("div");bar.className="bar";bar.appendChild(document.createElement("i"));
+    const tm=document.createElement("span");tm.className="stime";tm.textContent=(isOn?"":"0:00 / ")+fmt(r[1]-r[0]);
+    ctl.append(btn,bar,tm);
+    row.append(h,sub,vChips(seg,nv=>{
+      if(sp.key===seg.key){const d=active();let u=0;if(d&&sp.range)u=clamp((d.el.currentTime-sp.range[0])/(sp.range[1]-sp.range[0]),0,.98);segPlay(seg,nv,u);}
+    }),ctl);
+    box.appendChild(row);
+  });
+}
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  if(t===tab)return;
+  if(t==="seg"){tab="seg";walk.key=null;fadeAll(.3);}
+  else{tab="walk";sp.key=null;fadeAll(.3);walk.key=null;}
+  $("tabWalk").setAttribute("aria-selected",tab==="walk");$("tabSeg").setAttribute("aria-selected",tab==="seg");
+  $("paneWalk").hidden=tab!=="walk";$("paneSeg").hidden=tab!=="seg";
+  if(tab==="walk"){if(!map)initMap();else setTimeout(()=>map.invalidateSize(),50);}
+  if(tab==="seg"&&smap)setTimeout(()=>smap.invalidateSize(),50);
+  renderSegList();render();
+}
+$("tabWalk").addEventListener("click",()=>setTab("walk"));
+$("tabSeg").addEventListener("click",()=>setTab("seg"));
+[$("tabWalk"),$("tabSeg")].forEach(b=>b.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const o=b.id==="tabWalk"?$("tabSeg"):$("tabWalk");o.focus();o.click();}}));
+
+/* ---------- pocket mode ---------- */
+let pkTimer=null;
+$("btnPocket").addEventListener("click",()=>{if(!started)$("btnStart").click();keepAwake();renderNow();$("pocket").hidden=false;});
+const pk=$("pocket");
+pk.addEventListener("pointerdown",e=>{e.preventDefault();pk.classList.add("holding");$("pkRing").textContent="…";clearTimeout(pkTimer);pkTimer=setTimeout(()=>{pk.hidden=true;pk.classList.remove("holding");$("pkRing").textContent="길게";},1500);});
+["pointerup","pointercancel","pointerleave"].forEach(ev=>pk.addEventListener(ev,()=>{clearTimeout(pkTimer);pk.classList.remove("holding");$("pkRing").textContent="길게";}));
+pk.addEventListener("contextmenu",e=>e.preventDefault());
+
+/* ---------- controls ---------- */
+$("btnStart").addEventListener("click",()=>{
+  ensureAudio();if(ctx.state==="suspended")ctx.resume();
+  const seg=segNow()||SEGS[0];unlockDecks(segV(seg.key).audio);
+  if(!started){started=true;paused=false;$("btnStart").textContent="다시 듣기";$("btnPause").disabled=false;keepAwake();
+    if(!simOn()&&gpsState!=="fail")startGPS();walk.key=null;render();return;}
+  paused=false;walk.key=null;$("btnPause").textContent="소리 멈춤";render();
+});
+$("btnPause").addEventListener("click",()=>{
+  paused=!paused;$("btnPause").textContent=paused?"소리 다시 켜기":"소리 멈춤";
+  if(paused)fadeAll(.4);else walk.key=null;
+  render();
+});
+$("btnAuto").addEventListener("click",()=>{override=false;$("btnAuto").hidden=true;leave(false);decide();walk.key=null;render();});
+$("btnSim").addEventListener("click",()=>{if(simTimer)stopSim();else{if(tab!=="walk")setTab("walk");if(!started)$("btnStart").click();startSim();}});
+$("mode").value=cfg.mode;
+$("mode").addEventListener("change",e=>{cfg.mode=e.target.value;save();walk.key=null;render();});
+$("radius").value=cfg.radius;$("radiusVal").textContent=cfg.radius+" m";
+$("radius").addEventListener("input",e=>{cfg.radius=+e.target.value;$("radiusVal").textContent=cfg.radius+" m";save();draw();if(!override)decide();render();});
+$("ordered").checked=cfg.ordered;
+$("ordered").addEventListener("change",e=>{cfg.ordered=e.target.checked;save();render();});
+$("simMode").addEventListener("change",()=>{
+  if(!simOn()&&gpsState==="fail"){$("simMode").checked=true;return;}
+  if(!simOn()){stopSim();if(started)startGPS();}
+  if(map)map.getContainer().classList.toggle("leaflet-crosshair",simOn());
+  render();
+});
+$("btnReset").addEventListener("click",()=>{cfg.segV=clone(DEFAULT.segV);save();renderAllLists();walk.key=null;$("cfgMsg").textContent="모든 구간을 '2 · 밤의 소리'로 되돌렸습니다.";});
+
+const mq=window.matchMedia("(prefers-color-scheme: dark)");
+const recolor=()=>{drawSeg();if(!map)return;draw();if(meMarker){meMarker.setStyle({fillColor:css("--me"),color:css("--surface")});accCircle.setStyle({color:css("--me"),fillColor:css("--me")});}};
+if(mq.addEventListener)mq.addEventListener("change",recolor);
+new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+/* ---------- offline (hosted build only) ---------- */
+const AUDIO_CACHE="sonicwalk-audio-v1";const offSaved=new Set();let offOpened=false;
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+const absURL=u=>new URL(u,location.href).href;
+async function offRefresh(){
+  if(!HOSTED||!("caches" in window))return;
+  try{const c=await caches.open(AUDIO_CACHE);for(const v of VERSIONS){(await c.match(absURL(v.audio)))?offSaved.add(v.id):offSaved.delete(v.id);}}catch(e){}
+  offRender();
+  if(!offOpened&&[...new Set(Object.values(cfg.segV))].some(id=>!offSaved.has(id))){offOpened=true;$("offline").open=true;}
+}
+let offBusy=false,lock=null,lockKey=null;
+const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function getLock(){if(!lock){const r=await fetch("audio/lock.json",{cache:"no-store"});if(!r.ok)throw new Error("lock");lock=await r.json();}return lock;}
+async function unlock(pw){
+  const m=await getLock();
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub64(m.salt),iterations:m.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  try{const t=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub64(m.check.iv)},k,ub64(m.check.ct));if(new TextDecoder().decode(t)!=="sonicwalk-ok")return null;}catch(e){return null;}
+  return k;
+}
+async function pwCheck(){
+  const pw=$("pw").value.trim();if(!pw){$("pwMsg").textContent="비밀번호를 넣으세요.";$("pwMsg").className="hint bad";$("pw").focus();return false;}
+  if(!(window.crypto&&crypto.subtle)){$("pwMsg").textContent="이 브라우저에서는 잠긴 녹음을 풀 수 없습니다. 최신 Safari나 크롬으로 여세요.";$("pwMsg").className="hint bad";return false;}
+  $("pwMsg").textContent="확인하는 중…";$("pwMsg").className="hint";
+  try{lockKey=await unlock(pw);}catch(e){$("pwMsg").textContent="잠금 정보를 받지 못했습니다. 인터넷 연결을 확인하세요.";$("pwMsg").className="hint bad";return false;}
+  if(!lockKey){$("pwMsg").textContent="비밀번호가 맞지 않습니다.";$("pwMsg").className="hint bad";return false;}
+  $("pwMsg").textContent="확인되었습니다. 이제 버전을 저장하세요.";$("pwMsg").className="hint ok";return true;
+}
+$("pwOk").addEventListener("click",pwCheck);
+$("pw").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();pwCheck();}});
+function offRender(){
+  if(!HOSTED)return;
+  const used=new Set(Object.values(cfg.segV));
+  const box=$("offList");if(offBusy)return;box.textContent="";
+  VERSIONS.forEach(v=>{
+    const row=document.createElement("div");row.className="offrow";row.id="off-"+v.id;
+    const on=document.createElement("div");on.className="on";const b=document.createElement("b");b.textContent=v.name;
+    const s=document.createElement("span");s.textContent=v.mb.toFixed(0)+" MB"+(used.has(v.id)?" · 구간에 고른 버전":"");on.append(b,s);
+    const pb=document.createElement("div");pb.className="pbar";pb.hidden=true;pb.appendChild(document.createElement("i"));
+    row.appendChild(on);
+    if(offSaved.has(v.id)){const ok=document.createElement("span");ok.className="saved";ok.textContent="저장됨";
+      const del=document.createElement("button");del.textContent="지우기";del.setAttribute("aria-label",v.name+" 저장한 소리 지우기");
+      del.addEventListener("click",()=>offDelete(v));row.append(ok,del);}
+    else{const btn=document.createElement("button");btn.textContent="저장";btn.setAttribute("aria-label",v.name+" 오프라인 저장");
+      btn.addEventListener("click",()=>offSave(v,btn,s,pb));row.append(btn);}
+    row.appendChild(pb);box.appendChild(row);
+  });
+  storeNote();
+}
+async function storeNote(){
+  const usedS=new Set(Object.values(cfg.segV)),miss=VERSIONS.map(v=>v.id).filter(id=>usedS.has(id)&&!offSaved.has(id));
+  let t=miss.length?"구간에 고른 버전 중 아직 저장하지 않은 것: "+miss.map(id=>vById(id).chip).join(", ")+".":"구간에 고른 버전은 모두 저장되어 있습니다.";
+  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();if(e.usage!=null)t+=" 이 앱이 쓰는 공간 "+Math.round(e.usage/1e6)+" MB.";}}catch(e){}
+  if(!navigator.serviceWorker||!navigator.serviceWorker.controller)t+=" (오프라인 준비 중 · 처음 연 직후라면 한 번 새로 고침하세요.)";
+  if(!offBusy)$("offMsg").textContent=t;
+}
+async function offSave(v,btn,s,pb){
+  if(offBusy){$("offMsg").textContent="다른 버전을 저장하는 중입니다. 끝난 뒤 누르세요.";return;}
+  if(!lockKey&&!(await pwCheck())){$("offMsg").textContent="먼저 위에 수업 비밀번호를 넣고 확인을 누르세요.";return;}
+  offBusy=true;btn.disabled=true;btn.textContent="받는 중";pb.hidden=false;
+  try{
+    try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist();}catch(e){}
+    const m=await getLock(),f=m.files[v.id];if(!f)throw new Error("nofile");
+    const res=await fetch(f.src,{cache:"no-store"});if(!res.ok)throw new Error("HTTP "+res.status);
+    const total=f.encSize;const rd=res.body.getReader();let parts=[];let got=0;
+    for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;
+      pb.firstChild.style.width=Math.min(90,got/total*90)+"%";s.textContent="받는 중 "+(got/1e6).toFixed(1)+" / "+(total/1e6).toFixed(1)+" MB";}
+    if(got!==total)throw new Error("short");
+    let enc=new Blob(parts);parts=null;
+    const pre=ub64(f.prefix),CH=m.chunk+16,out=[];
+    for(let i=0;i<f.chunks;i++){
+      const iv=new Uint8Array(12);iv.set(pre,0);new DataView(iv.buffer).setUint32(8,i,false);
+      const ct=await enc.slice(i*CH,Math.min(total,(i+1)*CH)).arrayBuffer();
+      out.push(await crypto.subtle.decrypt({name:"AES-GCM",iv},lockKey,ct));
+      pb.firstChild.style.width=(90+10*(i+1)/f.chunks)+"%";s.textContent="푸는 중 "+(i+1)+" / "+f.chunks;
+    }
+    enc=null;
+    const blob=new Blob(out,{type:"audio/mp4"});if(blob.size!==f.size)throw new Error("size");
+    const c=await caches.open(AUDIO_CACHE);
+    await c.put(absURL(v.audio),new Response(blob,{headers:{"Content-Type":"audio/mp4","Content-Length":String(blob.size)}}));
+    offSaved.add(v.id);badUrls.delete(v.audio);walk.key=null;offBusy=false;offRender();$("offMsg").textContent=v.name+" 저장을 마쳤습니다.";
+  }catch(e){offBusy=false;offRender();$("offMsg").textContent=v.name+" 저장에 실패했습니다. "+(e&&e.name==="OperationError"?"비밀번호를 다시 확인하세요.":"와이파이 연결과 남은 저장 공간을 확인하고 다시 누르세요.");}
+}
+async function offDelete(v){
+  try{const c=await caches.open(AUDIO_CACHE);await c.delete(absURL(v.audio));}catch(e){}
+  offSaved.delete(v.id);offRender();$("offMsg").textContent=v.name+" 저장분을 지웠습니다.";
+}
+if(HOSTED){
+  $("offline").hidden=false;
+  if(isIOS&&!standalone)$("offIos").hidden=false;
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.addEventListener("controllerchange",()=>storeNote());
+    navigator.serviceWorker.register("sw.js").then(()=>navigator.serviceWorker.ready).then(()=>storeNote()).catch(()=>{$("offMsg").textContent="이 브라우저에서는 오프라인 저장을 쓸 수 없습니다. 인터넷이 연결된 상태로 들으세요.";});
+  }else $("offMsg").textContent="이 브라우저에서는 오프라인 저장을 쓸 수 없습니다.";
+  offRefresh();
+}
+
+renderVerAll();if(tab==="walk")initMap();initSegMap();renderSegList();render();
+})();
+</script>
+
+</body>
+</html>

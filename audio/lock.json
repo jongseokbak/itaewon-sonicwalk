@@ -1,0 +1,40 @@
+{
+ "v": 1,
+ "salt": "l7QjVaEio9lELyUYelPcsQ==",
+ "iter": 200000,
+ "chunk": 4194304,
+ "check": {
+  "iv": "gCoVmcX2JeFLX22c",
+  "ct": "zi04kPR6SAnqbim52Umx8xSCFSX1e62DC7358Q=="
+ },
+ "files": {
+  "v1": {
+   "src": "audio/v1_lunch.enc",
+   "size": 68021404,
+   "encSize": 68021676,
+   "chunks": 17,
+   "prefix": "r7lPLYlyQww="
+  },
+  "v2": {
+   "src": "audio/v2_evening.enc",
+   "size": 50124620,
+   "encSize": 50124812,
+   "chunks": 12,
+   "prefix": "19N5kucHbQw="
+  },
+  "v3": {
+   "src": "audio/v3_ghost_overlap.enc",
+   "size": 50103504,
+   "encSize": 50103696,
+   "chunks": 12,
+   "prefix": "cWhWJSm8Fek="
+  },
+  "v4": {
+   "src": "audio/v4_ghost_shuffle.enc",
+   "size": 50103292,
+   "encSize": 50103484,
+   "chunks": 12,
+   "prefix": "zaMikvAB83I="
+  }
+ }
+}
