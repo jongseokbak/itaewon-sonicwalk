@@ -35,6 +35,34 @@
    "encSize": 50103484,
    "chunks": 12,
    "prefix": "zaMikvAB83I="
+  },
+  "v1s": {
+   "src": "audio/v1_lunch_still.enc",
+   "size": 21148267,
+   "encSize": 21148363,
+   "chunks": 6,
+   "prefix": "Cdr7EGJZc5Y="
+  },
+  "v2s": {
+   "src": "audio/v2_evening_still.enc",
+   "size": 12369101,
+   "encSize": 12369149,
+   "chunks": 3,
+   "prefix": "i2C5H0CzBNk="
+  },
+  "v3s": {
+   "src": "audio/v3_ghost_overlap_still.enc",
+   "size": 22062805,
+   "encSize": 22062901,
+   "chunks": 6,
+   "prefix": "lCKOMj+/W0s="
+  },
+  "v4s": {
+   "src": "audio/v4_ghost_shuffle_still.enc",
+   "size": 22062168,
+   "encSize": 22062264,
+   "chunks": 6,
+   "prefix": "7WhupcYZiUI="
   }
  }
 }
