@@ -144,7 +144,12 @@ textarea{width:100%;box-sizing:border-box;min-height:90px;font-family:var(--font
 .sh b{font-weight:600;line-height:1.35}
 .ssub{font-size:13px;color:var(--muted);margin:0}
 .sctl{display:flex;align-items:center;gap:10px}
-.sctl .bar{flex:1}
+.sctl .scrub{flex:1;padding:12px 0;margin:-12px 0;cursor:pointer;touch-action:none;position:relative}
+.sctl .scrub:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.sctl .scrub .bar{position:relative;overflow:visible}
+.sctl .scrub .bar>i{display:block;height:100%;border-radius:3px;background:var(--live)}
+.sctl .scrub .knob{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--live);box-shadow:0 0 0 2px var(--surface);left:0;opacity:0;transition:opacity .15s}
+.segrow.on .sctl .scrub .knob,.sctl .scrub.drag .knob{opacity:1}
 .sctl button{min-width:4.5em}
 .stime{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 #offline[hidden]{display:none}
@@ -963,10 +968,39 @@ function segTick(){
   const row=document.getElementById("sg-"+seg.key);
   if(d&&!pendingPlay&&d.url===sp.url){
     const [a,b]=sp.range,t=d.el.currentTime;
-    if(row){row.querySelector(".bar>i").style.width=(clamp((t-a)/(b-a),0,1)*100)+"%";row.querySelector(".stime").textContent=fmt(Math.max(0,t-a))+" / "+fmt(b-a);}
+    if(row&&!scrubbing){const u=clamp((t-a)/(b-a),0,1);setScrubUI(row,u,b-a);}
     if(t>=b-.3){const i=SEGS.indexOf(seg),nx=SEGS[i+1];
       if($("autoNext").checked&&nx){segPlay(nx,cfg.segV[nx.key],0);}else segStop();}
   }
+}
+let scrubbing=false;
+function setScrubUI(row,u,len){
+  const i=row.querySelector(".bar>i"),k=row.querySelector(".knob"),sc=row.querySelector(".scrub"),tm=row.querySelector(".stime");
+  if(i)i.style.width=(u*100)+"%";if(k)k.style.left=(u*100)+"%";
+  if(sc){sc.setAttribute("aria-valuenow",String(Math.round(u*len)));sc.setAttribute("aria-valuetext",fmt(u*len)+" / "+fmt(len));}
+  if(tm)tm.textContent=fmt(u*len)+" / "+fmt(len);
+}
+/* jump within a segment: u = 0..1 of that segment (curated or full, whichever is in use) */
+function segSeek(seg,u){
+  u=clamp(u,0,.98);const vid=cfg.segV[seg.key];
+  if(sp.key===seg.key&&sp.range&&sp.url){const [a,b]=sp.range;playAt(sp.url,a+u*(b-a),.4);}
+  else segPlay(seg,vid,u);
+}
+function wireScrub(sc,row,seg,len){
+  const frac=e=>{const r=sc.getBoundingClientRect();return clamp((e.clientX-r.left)/r.width,0,1);};
+  let u=0;
+  sc.addEventListener("pointerdown",e=>{e.preventDefault();try{sc.setPointerCapture(e.pointerId);}catch(_){}
+    scrubbing=true;sc.classList.add("drag");u=frac(e);setScrubUI(row,u,len);});
+  sc.addEventListener("pointermove",e=>{if(!sc.classList.contains("drag"))return;u=frac(e);setScrubUI(row,u,len);});
+  const end=e=>{if(!sc.classList.contains("drag"))return;sc.classList.remove("drag");scrubbing=false;segSeek(seg,u);};
+  sc.addEventListener("pointerup",end);sc.addEventListener("pointercancel",()=>{sc.classList.remove("drag");scrubbing=false;});
+  sc.addEventListener("keydown",e=>{
+    if(!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;e.preventDefault();
+    let cur=0;if(sp.key===seg.key&&sp.range){const d=active();if(d)cur=clamp((d.el.currentTime-sp.range[0])/(sp.range[1]-sp.range[0]),0,1);}
+    const step=5/Math.max(1,len);
+    const nu=e.key==="Home"?0:e.key==="End"?.98:cur+(e.key==="ArrowRight"?step:-step);
+    setScrubUI(row,clamp(nu,0,.98),len);segSeek(seg,nu);
+  });
 }
 function renderSegList(){
   const box=$("segList");box.textContent="";
@@ -983,9 +1017,12 @@ function renderSegList(){
     const btn=document.createElement("button");btn.type="button";btn.className=isOn?"primary":"";btn.textContent=isOn?"멈춤":"듣기";
     btn.setAttribute("aria-label",seg.title+(isOn?" 멈춤":" 듣기"));
     btn.addEventListener("click",()=>{if(sp.key===seg.key)segStop();else segPlay(seg,cfg.segV[seg.key],0);});
-    const bar=document.createElement("div");bar.className="bar";bar.appendChild(document.createElement("i"));
+    const bar=document.createElement("div");bar.className="scrub";bar.tabIndex=0;bar.setAttribute("role","slider");
+    bar.setAttribute("aria-label",seg.title+" 재생 위치");bar.setAttribute("aria-valuemin","0");bar.setAttribute("aria-valuemax",String(Math.round(r[1]-r[0])));
+    const track=document.createElement("div");track.className="bar";track.appendChild(document.createElement("i"));
+    const knob=document.createElement("span");knob.className="knob";track.appendChild(knob);bar.appendChild(track);
     const tm=document.createElement("span");tm.className="stime";tm.textContent=(isOn?"":"0:00 / ")+fmt(r[1]-r[0]);
-    ctl.append(btn,bar,tm);
+    ctl.append(btn,bar,tm);wireScrub(bar,row,seg,r[1]-r[0]);
     row.append(h,sub,vChips(seg,nv=>{
       if(sp.key===seg.key){const d=active();let u=0;if(d&&sp.range)u=clamp((d.el.currentTime-sp.range[0])/(sp.range[1]-sp.range[0]),0,.98);segPlay(seg,nv,u);}
     }),ctl);
